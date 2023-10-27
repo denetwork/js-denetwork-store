@@ -1,0 +1,50 @@
+{
+	"name": "denetwork-store",
+	"version": "1.0.22",
+	"description": "DeNetwork Store Unit",
+	"keywords": [
+	],
+	"leadMaintainer": "DeNetwork, Team.",
+	"main": "dist/index.js",
+	"browser": "dist/index.js",
+	"license": "MIT",
+	"files": [
+		"src",
+		"dist"
+	],
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc",
+		"test": "jest"
+	},
+	"devDependencies": {
+		"@babel/preset-env": "^7.21.5",
+		"@babel/preset-typescript": "^7.21.5",
+		"@jest/globals": "^29.5.0",
+		"@types/crypto-js": "^4.1.1",
+		"@types/jest": "^29.5.1",
+		"@types/lodash": "^4.14.196",
+		"@types/uuid": "^9.0.2",
+		"@types/ws": "^8.5.5",
+		"fake-indexeddb": "^4.0.2",
+		"jest": "^29.5.0",
+		"ts-jest": "^29.1.0",
+		"ts-node": "^10.9.1"
+	},
+	"dependencies": {
+		"denetwork-utils": "^1.0.31",
+		"crypto-js": "^4.1.1",
+		"dotenv": "^16.3.1",
+		"ethers": "^6.7.1",
+		"idb": "^7.1.1",
+		"lodash": "^4.17.21",
+		"mongoose": "^7.4.3",
+		"uuid": "^9.0.0",
+		"web3id": "^1.0.0"
+	},
+	"author": "DeNetwork, Team.",
+	"homepage": "https://github.com/denetwork/",
+	"contributors": [
+		"DeNetwork, Team."
+	]
+}

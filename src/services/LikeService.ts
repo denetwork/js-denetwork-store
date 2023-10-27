@@ -9,7 +9,7 @@ import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
 import { ERefDataTypes } from "../models/ERefDataTypes";
-import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
+import { FavoriteType } from "../entities/FavoriteEntity";
 import { PostModel, PostType } from "../entities/PostEntity";
 import { CommentModel, CommentType } from "../entities/CommentEntity";
 

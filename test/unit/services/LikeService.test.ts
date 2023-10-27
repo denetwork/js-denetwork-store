@@ -1,6 +1,6 @@
 import { describe, expect } from '@jest/globals';
 import {
-	ERefDataTypes, FavoriteType,
+	ERefDataTypes,
 	LikeListResult,
 	likeSchema,
 	LikeType, postSchema, PostService, PostType

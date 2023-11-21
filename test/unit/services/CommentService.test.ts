@@ -272,7 +272,9 @@ describe( "CommentService", () =>
 			const favoriteRecord = await favoriteService.add( walletObj.address, favorite, favorite.sig );
 			expect( favoriteRecord ).toBeDefined();
 
+			//
 			//	...
+			//
 			const commentService = new CommentService();
 			const result : CommentType | null = await commentService.queryOne( walletObj.address, { by : `hash`, hash : savedComment.hash } );
 			expect( result ).toBeDefined();

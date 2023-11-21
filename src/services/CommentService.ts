@@ -17,7 +17,7 @@ import { ERefDataTypes } from "../models/ERefDataTypes";
 /**
  * 	class CommentService
  */
-export class CommentService extends BaseService implements IWeb3StoreService< CommentType, CommentListResult >
+export class CommentService extends BaseService implements IWeb3StoreService<CommentType, CommentListResult>
 {
 	constructor()
 	{
@@ -30,7 +30,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param sig	{string}
 	 *	@returns {Promise<CommentType | null>}
 	 */
-	public add( wallet : string, data : CommentType, sig : string ) : Promise< CommentType | null >
+	public add( wallet : string, data : CommentType, sig : string ) : Promise<CommentType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -109,7 +109,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param sig	{string}
 	 *	@returns {Promise< CommentType | null >}
 	 */
-	public update( wallet : string, data : CommentType, sig : string ) : Promise< CommentType | null >
+	public update( wallet : string, data : CommentType, sig : string ) : Promise<CommentType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -130,7 +130,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param sig	{string}
 	 *	@returns { Promise< CommentType | null > }
 	 */
-	public updateFor( wallet: string, data : any, sig ?: string )  : Promise< CommentType | null >
+	public updateFor( wallet : string, data : any, sig ? : string ) : Promise<CommentType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -174,7 +174,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**
@@ -184,7 +184,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param value	{number} 1 or -1
 	 *	@returns {Promise< CommentType | null >}
 	 */
-	private _updateCommentStatistics( wallet : string, hash : string, key : string, value : 1 | -1 ) : Promise< CommentType | null >
+	private _updateCommentStatistics( wallet : string, hash : string, key : string, value : 1 | -1 ) : Promise<CommentType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -226,7 +226,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				await this.connect();
 				const find : CommentType | null = await CommentModel
 					.findOne()
-					.byWalletAndHash( wallet, hash )
+					.byHash( hash )
 					.lean<CommentType>()
 					.exec();
 				if ( find )
@@ -321,7 +321,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param sig	{string}
 	 * 	@returns {Promise< CommentType | null >}
 	 */
-	public queryOne( wallet : string, data : any, sig ?: string ) : Promise<CommentType | null>
+	public queryOne( wallet : string, data : any, sig ? : string ) : Promise<CommentType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -355,7 +355,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param sig	{string}
 	 *	@returns { Promise<CommentListResult> }
 	 */
-	public queryList( wallet : string, data : any, sig ?: string ) : Promise<CommentListResult>
+	public queryList( wallet : string, data : any, sig ? : string ) : Promise<CommentListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -485,7 +485,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param options	{TQueueListOptions}
 	 *	@returns {Promise<CommentListResult>}
 	 */
-	private _queryListByWalletAndPostHash( wallet : string, postHash ?: string, options ?: TQueueListOptions ) : Promise<CommentListResult>
+	private _queryListByWalletAndPostHash( wallet : string, postHash ? : string, options ? : TQueueListOptions ) : Promise<CommentListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -504,7 +504,9 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
 				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
 				const skip = ( pageNo - 1 ) * pageSize;
-				const sortBy : { [ key : string ] : SortOrder } = QueryUtil.getSafeSortBy( options?.sort );
+				const sortBy : {
+					[ key : string ] : SortOrder
+				} = QueryUtil.getSafeSortBy( options?.sort );
 
 				let result : CommentListResult = {
 					total : 0,
@@ -515,7 +517,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 
 				await this.connect();
 				const comments : Array<CommentType> = await CommentModel
-					.find( { parentHash : { $exists: false } } )
+					.find( { parentHash : { $exists : false } } )
 					.byWalletAndPostHash( wallet, postHash )
 					.sort( sortBy )
 					.skip( skip )
@@ -524,7 +526,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 					.exec();
 				if ( Array.isArray( comments ) )
 				{
-					for ( let i = 0; i < comments.length; i ++ )
+					for ( let i = 0; i < comments.length; i++ )
 					{
 						comments[ i ][ this.walletFavoritedKey ] =
 							Web3Digester.isValidHash( comments[ i ].hash ) &&
@@ -552,7 +554,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param options		{TQueueListOptions}
 	 *	@returns {Promise<CommentListResult>}
 	 */
-	private _queryListByPostHash( wallet : string, postHash : string, options ?: TQueueListOptions ) : Promise<CommentListResult>
+	private _queryListByPostHash( wallet : string, postHash : string, options ? : TQueueListOptions ) : Promise<CommentListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -566,7 +568,9 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
 				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
 				const skip = ( pageNo - 1 ) * pageSize;
-				const sortBy : { [ key : string ] : SortOrder } = QueryUtil.getSafeSortBy( options?.sort );
+				const sortBy : {
+					[ key : string ] : SortOrder
+				} = QueryUtil.getSafeSortBy( options?.sort );
 
 				let result : CommentListResult = {
 					total : 0,
@@ -577,7 +581,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 
 				await this.connect();
 				const comments : Array<CommentType> = await CommentModel
-					.find( { parentHash : { $exists: false } } )
+					.find( { parentHash : { $exists : false } } )
 					.byPostHash( postHash )
 					.sort( sortBy )
 					.skip( skip )
@@ -588,7 +592,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				{
 					if ( isAddress( wallet ) )
 					{
-						for ( let i = 0; i < comments.length; i ++ )
+						for ( let i = 0; i < comments.length; i++ )
 						{
 							comments[ i ][ this.walletFavoritedKey ] =
 								Web3Digester.isValidHash( comments[ i ].hash ) &&
@@ -618,7 +622,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param options		{TQueueListOptions}
 	 *	@returns {Promise<CommentListResult>}
 	 */
-	private _queryListByPostHashAndParentHash( wallet : string, postHash : string, parentHash : string, options ?: TQueueListOptions ) : Promise<CommentListResult>
+	private _queryListByPostHashAndParentHash( wallet : string, postHash : string, parentHash : string, options ? : TQueueListOptions ) : Promise<CommentListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -636,7 +640,9 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
 				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
 				const skip = ( pageNo - 1 ) * pageSize;
-				const sortBy : { [ key : string ] : SortOrder } = QueryUtil.getSafeSortBy( options?.sort );
+				const sortBy : {
+					[ key : string ] : SortOrder
+				} = QueryUtil.getSafeSortBy( options?.sort );
 
 				let result : CommentListResult = {
 					total : 0,
@@ -658,7 +664,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				{
 					if ( isAddress( wallet ) )
 					{
-						for ( let i = 0; i < comments.length; i ++ )
+						for ( let i = 0; i < comments.length; i++ )
 						{
 							comments[ i ][ this.walletFavoritedKey ] =
 								Web3Digester.isValidHash( comments[ i ].hash ) &&
@@ -678,11 +684,6 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				reject( err );
 			}
 		} );
-	}
-
-	public get walletFavoritedKey() : string
-	{
-		return `_walletFavorited`;
 	}
 
 	/**
@@ -716,7 +717,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**

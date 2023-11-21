@@ -1,5 +1,5 @@
 import { PageUtil, TestUtil, TypeUtil } from "denetwork-utils";
-import { EtherWallet, Web3Validator } from "web3id";
+import { EtherWallet, Web3Digester, Web3Validator } from "web3id";
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { BaseService } from "./BaseService";
 import { Document, Error, SortOrder, Types } from "mongoose";
@@ -9,6 +9,11 @@ import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
 import { CommentModel, commentSchema, CommentType } from "../entities/CommentEntity";
+import { isAddress } from "ethers";
+import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
+import { ERefDataTypes } from "../models/ERefDataTypes";
+import _ from "lodash";
+import { LikeModel, LikeType } from "../entities/LikeEntity";
 
 /**
  * 	class PostService
@@ -291,12 +296,17 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				}
 
 				await this.connect();
-				const findPost : PostType | null = await this._queryOneByWalletAndHash( wallet, hash );
-				if ( findPost )
+				const find : PostType | null = await PostModel
+					.findOne()
+					.byHash( hash )
+					.lean<PostType>()
+					.exec();
+				if ( find )
 				{
-					const newValue : number = findPost[ key ] + ( 1 === value ? 1 : -1 );
+					const orgValue : number = _.has( find, key ) ? find[ key ] : 0;
+					const newValue : number = orgValue + ( 1 === value ? 1 : -1 );
 					const update : Record<string, any> = { [ key ] : newValue >= 0 ? newValue : 0 };
-					const savedPost : PostType | null = await PostModel.findOneAndUpdate( findPost, update, { new : true } ).lean<PostType>();
+					const savedPost : PostType | null = await PostModel.findOneAndUpdate( find, update, { new : true } ).lean<PostType>();
 
 					//	...
 					return resolve( savedPost );
@@ -355,11 +365,15 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 
 				//	...
 				await this.connect();
-				const findPost : PostType | null = await this._queryOneByWalletAndHash( wallet, data.hash );
-				if ( findPost )
+				const find : PostType | null = await PostModel
+					.findOne()
+					.byWalletAndHash( wallet, data.hash )
+					.lean<PostType>()
+					.exec();
+				if ( find )
 				{
-					const update = { deleted : findPost._id.toHexString() };
-					const newDoc = await PostModel.findOneAndUpdate( findPost, update, { new : true } );
+					const update = { deleted : find._id.toHexString() };
+					const newDoc = await PostModel.findOneAndUpdate( find, update, { new : true } );
 					return resolve( newDoc ? 1 : 0 );
 				}
 
@@ -393,7 +407,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				switch ( data.by )
 				{
 					case 'hash' :
-						return resolve( await this._queryOneByHash( data.hash ) );
+						return resolve( await this._queryOneByHash( wallet, data.hash ) );
 					case 'walletAndHash' :
 						return resolve( await this._queryOneByWalletAndHash( wallet, data.hash ) );
 				}
@@ -419,10 +433,6 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 		{
 			try
 			{
-				if ( ! EtherWallet.isValidAddress( wallet ) )
-				{
-					return reject( `invalid wallet` );
-				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
 					return reject( `invalid data, missing key : by` );
@@ -431,9 +441,11 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				switch ( data.by )
 				{
 					case 'wallet' :
+						//	wallet - required
 						return resolve( await this._queryListByWallet( wallet, data.options ) );
 					case 'refAuthorWallet' :
-						return resolve( await this._queryListByRefAuthorWallet( data.refAuthorWallet, data.options ) );
+						//	wallet - optional
+						return resolve( await this._queryListByRefAuthorWallet( wallet, data.refAuthorWallet, data.options ) );
 				}
 
 				//	...
@@ -448,10 +460,11 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 
 
 	/**
-	 *	@param hash	{string}	a 66-character hexadecimal string
+	 *	@param wallet	{string}	-
+	 *	@param hash	{string}	- a 66-character hexadecimal string
 	 *	@returns {Promise< PostType | null >}
 	 */
-	private _queryOneByHash( hash : string ) : Promise<PostType | null>
+	private _queryOneByHash( wallet : string, hash : string ) : Promise<PostType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -470,6 +483,17 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 					.exec();
 				if ( record )
 				{
+					if ( isAddress( wallet ) )
+					{
+						record[ this.walletFavoritedKey ] =
+							Web3Digester.isValidHash( record.hash ) &&
+							await this.walletFavoritedPost( wallet, record.hash );
+						record[ this.walletLikedKey ] =
+							Web3Digester.isValidHash( record.hash ) &&
+							await this.walletLikedPost( wallet, record.hash );
+					}
+
+					//	...
 					return resolve( record );
 				}
 
@@ -510,6 +534,13 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 					.exec();
 				if ( record )
 				{
+					record[ this.walletFavoritedKey ] =
+						Web3Digester.isValidHash( record.hash ) &&
+						await this.walletFavoritedPost( wallet, record.hash );
+					record[ this.walletLikedKey ] =
+						Web3Digester.isValidHash( record.hash ) &&
+						await this.walletLikedPost( wallet, record.hash );
+					//	...
 					return resolve( record );
 				}
 
@@ -553,7 +584,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				};
 
 				await this.connect();
-				const list : Array<PostType> = await PostModel
+				const posts : Array<PostType> = await PostModel
 					.find()
 					.byWallet( wallet )
 					.sort( sortBy )
@@ -561,10 +592,21 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 					.limit( pageSize )
 					.lean<Array<PostType>>()
 					.exec();
-				if ( Array.isArray( list ) )
+				if ( Array.isArray( posts ) )
 				{
-					result.list = list;
-					result.total = list.length;
+					for ( let i = 0; i < posts.length; i++ )
+					{
+						posts[ i ][ this.walletFavoritedKey ] =
+							Web3Digester.isValidHash( posts[ i ].hash ) &&
+							await this.walletFavoritedPost( wallet, posts[ i ].hash );
+						posts[ i ][ this.walletLikedKey ] =
+							Web3Digester.isValidHash( posts[ i ].hash ) &&
+							await this.walletLikedPost( wallet, posts[ i ].hash );
+					}
+
+					//	...
+					result.list = posts;
+					result.total = posts.length;
 				}
 
 				//	...
@@ -578,11 +620,12 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 	}
 
 	/**
-	 *	@param refAuthorWallet		{string}	wallet address
+	 *	@param [wallet]			{string}	-
+	 *	@param refAuthorWallet		{string}	- wallet address
 	 *	@param options	{TQueueListOptions}
 	 *	@returns {Promise<PostListResult>}
 	 */
-	private _queryListByRefAuthorWallet( refAuthorWallet : string, options ? : TQueueListOptions ) : Promise<PostListResult>
+	private _queryListByRefAuthorWallet( wallet : string, refAuthorWallet : string, options ? : TQueueListOptions ) : Promise<PostListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -608,7 +651,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				};
 
 				await this.connect();
-				const list : Array<PostType> = await PostModel
+				const posts : Array<PostType> = await PostModel
 					.find()
 					.byRefAuthorWallet( refAuthorWallet )
 					.sort( sortBy )
@@ -616,10 +659,24 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 					.limit( pageSize )
 					.lean<Array<PostType>>()
 					.exec();
-				if ( Array.isArray( list ) )
+				if ( Array.isArray( posts ) )
 				{
-					result.list = list;
-					result.total = list.length;
+					if ( isAddress( wallet ) )
+					{
+						for ( let i = 0; i < posts.length; i++ )
+						{
+							posts[ i ][ this.walletFavoritedKey ] =
+								Web3Digester.isValidHash( posts[ i ].hash ) &&
+								await this.walletFavoritedPost( wallet, posts[ i ].hash );
+							posts[ i ][ this.walletLikedKey ] =
+								Web3Digester.isValidHash( posts[ i ].hash ) &&
+								await this.walletLikedPost( wallet, posts[ i ].hash );
+						}
+					}
+
+					//	...
+					result.list = posts;
+					result.total = posts.length;
 				}
 
 				//	...
@@ -631,6 +688,75 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			}
 		} );
 	}
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param postHash		{string}
+	 *	@returns {Promise<boolean>}
+	 */
+	public walletFavoritedPost( wallet : string, postHash : string ) : Promise<boolean>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! isAddress( wallet ) )
+				{
+					return reject( `invalid wallet` );
+				}
+				if ( ! Web3Digester.isValidHash( postHash ) )
+				{
+					return reject( `invalid postHash` );
+				}
+
+				const favRecord = await FavoriteModel
+					.findOne()
+					.byWalletAndRefTypeAndRefHash( wallet, ERefDataTypes.post, postHash )
+					.lean<FavoriteType>()
+					.exec();
+				resolve( ( !! favRecord ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		});
+	}
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param postHash		{string}
+	 *	@returns {Promise<boolean>}
+	 */
+	public walletLikedPost( wallet : string, postHash : string ) : Promise<boolean>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! isAddress( wallet ) )
+				{
+					return reject( `invalid wallet` );
+				}
+				if ( ! Web3Digester.isValidHash( postHash ) )
+				{
+					return reject( `invalid postHash` );
+				}
+
+				const likeRecord = await LikeModel
+					.findOne()
+					.byWalletAndRefTypeAndRefHash( wallet, ERefDataTypes.post, postHash )
+					.lean<LikeType>()
+					.exec();
+				resolve( ( !! likeRecord ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		});
+	}
+
 
 	/**
 	 * 	@returns {Promise<void>}

@@ -1,7 +1,7 @@
 import { describe, expect } from '@jest/globals';
 import { EtherWallet, Web3Signer, TWalletBaseItem, Web3Digester } from "web3id";
 import { ethers } from "ethers";
-import { DatabaseConnection, ERefDataTypes } from "../../../src";
+import { DatabaseConnection, ERefDataTypes, FavoriteService, FavoriteType } from "../../../src";
 import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { PostListResult, postSchema, PostType } from "../../../src";
@@ -10,7 +10,7 @@ import { TQueueListOptions } from "../../../src/models/TQuery";
 import { commentSchema, CommentType } from "../../../src";
 import { CommentService } from "../../../src";
 import { resultErrors } from "../../../src";
-
+import _ from "lodash";
 
 
 /**
@@ -174,6 +174,8 @@ describe( "CommentService", () =>
 			savedComment = await commentService.add( walletObj.address, comment, comment.sig );
 			expect( savedComment ).toBeDefined();
 			expect( savedComment ).toHaveProperty( '_id' );
+			expect( savedComment ).not.toHaveProperty( commentService.walletFavoritedKey );
+			expect( savedComment[ commentService.walletFavoritedKey ] ).toBe( undefined );
 
 			//	wait for a while
 			await TestUtil.sleep(5 * 1000 );
@@ -187,6 +189,9 @@ describe( "CommentService", () =>
 		{
 			const commentService = new CommentService();
 			const result : CommentType | null = await commentService.queryOne( walletObj.address, { by : `walletAndHash`, hash : savedComment.hash } );
+			expect( result ).toBeDefined();
+			expect( result ).toHaveProperty( commentService.walletFavoritedKey );
+			expect( result[ commentService.walletFavoritedKey ] ).toBeFalsy();
 			//
 			//    console.log( result );
 			//    {
@@ -233,6 +238,94 @@ describe( "CommentService", () =>
 		}, 60 * 10e3 );
 	} );
 
+	describe( "Query one with my favorite", () =>
+	{
+		it( "should return a record by wallet and hash with key `_walletFavorited`", async () =>
+		{
+			//
+			//	favorite this comment
+			//
+			let favorite : FavoriteType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				refType : ERefDataTypes.comment,
+				refHash : savedComment.hash,
+				refBody : 'will favorite this comment',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			favorite.sig = await Web3Signer.signObject( walletObj.privateKey, favorite );
+			favorite.hash = await Web3Digester.hashObject( favorite );
+			expect( favorite.sig ).toBeDefined();
+			expect( typeof favorite.sig ).toBe( 'string' );
+			expect( favorite.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//
+			//	try to save the record to database
+			//
+			const favoriteService = new FavoriteService();
+			const favoriteRecord = await favoriteService.add( walletObj.address, favorite, favorite.sig );
+			expect( favoriteRecord ).toBeDefined();
+
+			//	...
+			const commentService = new CommentService();
+			const result : CommentType | null = await commentService.queryOne( walletObj.address, { by : `hash`, hash : savedComment.hash } );
+			expect( result ).toBeDefined();
+			expect( result ).toHaveProperty( commentService.walletFavoritedKey );
+			expect( result[ commentService.walletFavoritedKey ] ).toBeTruthy();
+			//
+			//	console.log( result );
+			//
+			//	{
+			//       _id: new ObjectId("655ceab804408ad6071a1119"),
+			//       timestamp: 1700588216042,
+			//       hash: '0xc7b84e4e80394d8e8e923d32bbc4ad5e8d2dcda3fe9f249429ce2b17f1d941b8',
+			//       version: '1.0.0',
+			//       deleted: '000000000000000000000000',
+			//       wallet: '0xC8F60EaF5988aC37a2963aC5Fabe97f709d6b357',
+			//       bitcoinPrice: '25888',
+			//       sig: '0x558032f5793fd26eb51dd779f8f4a8c6f7913bb0002fdd19eaecf06cff19020747f290c8bd91e55eaff14173e1c28adbc2ec7069f965fc94aecf4c25c5ebcaf31b',
+			//       postHash: '0x34f51428a0b33bccc0f65d369a425c72ef32e6b0239048ca0a042fbb946dacc3',
+			//       authorName: 'XING',
+			//       authorAvatar: 'https://avatars.githubusercontent.com/u/142800322?v=4',
+			//       replyTo: 'HaSeme',
+			//       postSnippet: 'post name abc',
+			//       body: 'Hello 1',
+			//       pictures: [],
+			//       videos: [],
+			//       statisticView: 0,
+			//       statisticRepost: 0,
+			//       statisticQuote: 0,
+			//       statisticLike: 0,
+			//       statisticFavorite: 1,
+			//       statisticReply: 0,
+			//       remark: 'no ...',
+			//       createdAt: 2023-11-21T17:36:56.042Z,
+			//       updatedAt: 2023-11-21T17:37:01.127Z,
+			//       __v: 0,
+			//       _walletFavorited: true
+			//     }
+			//
+			if ( result )
+			{
+				const requiredKeys : Array<string> | null = SchemaUtil.getRequiredKeys( commentSchema );
+				expect( Array.isArray( requiredKeys ) ).toBeTruthy();
+				if ( requiredKeys )
+				{
+					for ( const key of requiredKeys )
+					{
+						expect( result ).toHaveProperty( key );
+					}
+				}
+			}
+
+		}, 60 * 10e3 );
+	} );
 
 	describe( "Query list", () =>
 	{
@@ -287,12 +380,19 @@ describe( "CommentService", () =>
 			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
 			if ( requiredKeys )
 			{
-				for ( const contact of results.list )
+				for ( const record of results.list )
 				{
 					for ( const key of requiredKeys )
 					{
-						expect( contact ).toHaveProperty( key );
+						expect( record ).toHaveProperty( key );
 					}
+
+					//
+					//	the wallet field is empty when submitting the query,
+					//	so `commentService.walletFavoritedKey` will undefined
+					//
+					expect( record ).not.toHaveProperty( commentService.walletFavoritedKey );
+					expect( record[ commentService.walletFavoritedKey ] ).toBe( undefined );
 				}
 			}
 
@@ -345,12 +445,15 @@ describe( "CommentService", () =>
 			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
 			if ( requiredKeys )
 			{
-				for ( const contact of results.list )
+				for ( const record of results.list )
 				{
 					for ( const key of requiredKeys )
 					{
-						expect( contact ).toHaveProperty( key );
+						expect( record ).toHaveProperty( key );
 					}
+
+					expect( record ).toHaveProperty( commentService.walletFavoritedKey );
+					//expect( record[ commentService.walletFavoritedKey ] ).toBeFalsy();
 				}
 			}
 
@@ -403,12 +506,14 @@ describe( "CommentService", () =>
 			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
 			if ( requiredKeys )
 			{
-				for ( const contact of results.list )
+				for ( const record of results.list )
 				{
 					for ( const key of requiredKeys )
 					{
-						expect( contact ).toHaveProperty( key );
+						expect( record ).toHaveProperty( key );
 					}
+
+					expect( record ).toHaveProperty( commentService.walletFavoritedKey );
 				}
 			}
 
@@ -522,12 +627,287 @@ describe( "CommentService", () =>
 				expect( Array.isArray( requiredKeys ) ).toBeTruthy();
 				if ( requiredKeys )
 				{
-					for ( const contact of results.list )
+					for ( const record of results.list )
 					{
 						for ( const key of requiredKeys )
 						{
-							expect( contact ).toHaveProperty( key );
+							expect( record ).toHaveProperty( key );
 						}
+
+						//
+						//	the wallet field is empty when submitting the query,
+						//	so `commentService.walletFavoritedKey` will undefined
+						//
+						expect( record ).not.toHaveProperty( commentService.walletFavoritedKey );
+						expect( record[ commentService.walletFavoritedKey ] ).toBe( undefined );
+					}
+				}
+			}
+
+			//	wait for a while
+			await TestUtil.sleep(5 * 1000 );
+
+		}, 60 * 10e3 );
+	} );
+
+	describe( "Query children by pagination", () =>
+	{
+		it( "should return a list of records by pagination from database", async () =>
+		{
+			const commentService = new CommentService();
+			await commentService.clearAll();
+
+			//
+			//	create a parent comment
+			//
+			let comment : CommentType = {
+				postHash : savedPost.hash,
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				sig : ``,
+				authorName : 'XING',
+				authorAvatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				replyTo : 'HaSeme',
+				postSnippet : `post name abc`,
+				body : `Hello, this is the body of parent comment`,
+				pictures : [],
+				videos : [],
+				bitcoinPrice : '25888',
+				statisticView : 0,
+				statisticRepost : 0,
+				statisticQuote : 0,
+				statisticLike : 0,
+				statisticFavorite : 0,
+				statisticReply : 0,
+				remark : `this is parent comment`,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			comment.sig = await Web3Signer.signObject( walletObj.privateKey, comment, exceptedKeys );
+			comment.hash = await Web3Digester.hashObject( comment, exceptedKeys );
+			expect( comment.sig ).toBeDefined();
+			expect( typeof comment.sig ).toBe( 'string' );
+			expect( comment.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			const parentComment : PostType | null = await commentService.add( walletObj.address, comment, comment.sig );
+			expect( parentComment ).toBeDefined();
+
+			//
+			//	create children comments
+			//
+			for ( let i = 0; i < 100; i ++ )
+			{
+				const NoStr : string = Number(i).toString().padStart( 2, '0' );
+				let comment : CommentType = {
+					postHash : savedPost.hash,
+					timestamp : new Date().getTime(),
+					hash : '',
+					version : '1.0.0',
+					deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+					wallet : walletObj.address,
+					sig : ``,
+					authorName : 'XING',
+					authorAvatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+					parentHash : parentComment.hash,
+					replyTo : 'HaSeme',
+					postSnippet : `post name abc`,
+					body : `Hello 1 ${ NoStr }`,
+					pictures : [],
+					videos : [],
+					bitcoinPrice : '25888',
+					statisticView : 0,
+					statisticRepost : 0,
+					statisticQuote : 0,
+					statisticLike : 0,
+					statisticFavorite : 0,
+					statisticReply : 0,
+					remark : `no ... ${ NoStr }`,
+					createdAt: new Date(),
+					updatedAt: new Date()
+				};
+				comment.sig = await Web3Signer.signObject( walletObj.privateKey, comment, exceptedKeys );
+				comment.hash = await Web3Digester.hashObject( comment, exceptedKeys );
+				expect( comment.sig ).toBeDefined();
+				expect( typeof comment.sig ).toBe( 'string' );
+				expect( comment.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+				const result : PostType | null = await commentService.add( walletObj.address, comment, comment.sig );
+				expect( result ).toBeDefined();
+			}
+
+			//
+			//	check .statisticChildrenCount
+			//
+			const checkParentComment : CommentType = await commentService.queryOne( ``, { by : 'hash', hash : parentComment.hash } );
+			expect( checkParentComment ).toBeDefined();
+			expect( checkParentComment ).toHaveProperty( `statisticChildrenCount` );
+			expect( _.isNumber( checkParentComment.statisticChildrenCount ) ).toBeTruthy();
+			expect( checkParentComment.statisticChildrenCount ).toBe( 100 );
+
+			//
+			//	Query the normal list by pagination
+			//
+			for ( let page = 1; page <= 10; page ++ )
+			{
+				const options : TQueueListOptions = {
+					pageNo : page,
+					pageSize : 10
+				};
+				const results : PostListResult = await commentService.queryList( '',
+					{ by : 'postHash',
+						postHash : savedPost.hash,
+						options : options }
+				);
+				expect( results ).toHaveProperty( 'total' );
+				expect( results ).toHaveProperty( 'pageNo' );
+				expect( results ).toHaveProperty( 'pageSize' );
+				expect( results ).toHaveProperty( 'list' );
+				expect( results.pageNo ).toBe( options.pageNo );
+				expect( results.pageSize ).toBe( options.pageSize );
+				//
+				//    console.log( results );
+				//    {
+				//       total: 10,
+				//       pageNo: 1,
+				//       pageSize: 10,
+				//       list: [
+				//         {
+				//           _id: new ObjectId("6500dd417151729b4d74e1dd"),
+				//           timestamp: 1694555457819,
+				//           hash: '0xee83972f75b9383ae83a0ed07bc6fe70608f173038df30499b257454d2bf53f1',
+				//           version: '1.0.0',
+				//           deleted: new ObjectId("000000000000000000000000"),
+				//           wallet: '0xC8F60EaF5988aC37a2963aC5Fabe97f709d6b357',
+				//           sig: '0xe8c21138207d857d49d7be75e9b0df5d297b4c3d20861e4f074b06656421ed8445f3093bb9791d05cf7f48c68daba9dc1ab888e5e71e4c9e19026fee352157641b',
+				//           postHash: '0x80b43c836b71f252c4aa87398fc7c765cb7cd96fd81fb4def58f641bee6a3a66',
+				//           authorName: 'XING',
+				//           authorAvatar: 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				//           replyTo: 'HaSeme',
+				//           body: 'Hello 1 99',
+				//           pictures: [],
+				//           videos: [],
+				//           bitcoinPrice: '25888',
+				//           statisticView: 0,
+				//           statisticRepost: 0,
+				//           statisticQuote: 0,
+				//           statisticLike: 0,
+				//           statisticFavorite: 0,
+				//           statisticReply: 0,
+				//           remark: 'no ... 99',
+				//           createdAt: 2023-09-12T21:50:57.819Z,
+				//           updatedAt: 2023-09-12T21:50:57.819Z,
+				//           __v: 0
+				//         },
+				//         ...
+				//       ]
+				//     }
+				//
+				const requiredKeys : Array<string> | null = SchemaUtil.getRequiredKeys( commentSchema );
+				expect( Array.isArray( requiredKeys ) ).toBeTruthy();
+				if ( requiredKeys )
+				{
+					for ( const record of results.list )
+					{
+						for ( const key of requiredKeys )
+						{
+							expect( record ).toHaveProperty( key );
+						}
+
+						expect( record ).not.toHaveProperty( `parentHash` );
+						expect( record.parentHash ).toBe( undefined );
+
+						//
+						//	the wallet field is empty when submitting the query,
+						//	so `commentService.walletFavoritedKey` will undefined
+						//
+						expect( record ).not.toHaveProperty( commentService.walletFavoritedKey );
+						expect( record[ commentService.walletFavoritedKey ] ).toBe( undefined );
+					}
+				}
+			}
+
+			//
+			//	Query the children by pagination
+			//
+			for ( let page = 1; page <= 10; page ++ )
+			{
+				const options : TQueueListOptions = {
+					pageNo : page,
+					pageSize : 10
+				};
+				const results : PostListResult = await commentService.queryList( '',
+					{ by : 'postHashAndParentHash',
+						postHash : savedPost.hash,
+						parentHash : parentComment.hash,
+						options : options }
+				);
+				expect( results ).toHaveProperty( 'total' );
+				expect( results ).toHaveProperty( 'pageNo' );
+				expect( results ).toHaveProperty( 'pageSize' );
+				expect( results ).toHaveProperty( 'list' );
+				expect( results.pageNo ).toBe( options.pageNo );
+				expect( results.pageSize ).toBe( options.pageSize );
+				//
+				//    console.log( results );
+				//    {
+				//       total: 10,
+				//       pageNo: 1,
+				//       pageSize: 10,
+				//       list: [
+				//         {
+				//           _id: new ObjectId("6500dd417151729b4d74e1dd"),
+				//           timestamp: 1694555457819,
+				//           hash: '0xee83972f75b9383ae83a0ed07bc6fe70608f173038df30499b257454d2bf53f1',
+				//           version: '1.0.0',
+				//           deleted: new ObjectId("000000000000000000000000"),
+				//           wallet: '0xC8F60EaF5988aC37a2963aC5Fabe97f709d6b357',
+				//           sig: '0xe8c21138207d857d49d7be75e9b0df5d297b4c3d20861e4f074b06656421ed8445f3093bb9791d05cf7f48c68daba9dc1ab888e5e71e4c9e19026fee352157641b',
+				//           postHash: '0x80b43c836b71f252c4aa87398fc7c765cb7cd96fd81fb4def58f641bee6a3a66',
+				//           authorName: 'XING',
+				//           authorAvatar: 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				//           replyTo: 'HaSeme',
+				//           body: 'Hello 1 99',
+				//           pictures: [],
+				//           videos: [],
+				//           bitcoinPrice: '25888',
+				//           statisticView: 0,
+				//           statisticRepost: 0,
+				//           statisticQuote: 0,
+				//           statisticLike: 0,
+				//           statisticFavorite: 0,
+				//           statisticReply: 0,
+				//           remark: 'no ... 99',
+				//           createdAt: 2023-09-12T21:50:57.819Z,
+				//           updatedAt: 2023-09-12T21:50:57.819Z,
+				//           __v: 0
+				//         },
+				//         ...
+				//       ]
+				//     }
+				//
+				const requiredKeys : Array<string> | null = SchemaUtil.getRequiredKeys( commentSchema );
+				expect( Array.isArray( requiredKeys ) ).toBeTruthy();
+				if ( requiredKeys )
+				{
+					for ( const record of results.list )
+					{
+						for ( const key of requiredKeys )
+						{
+							expect( record ).toHaveProperty( key );
+						}
+
+						expect( record ).toHaveProperty( `parentHash` );
+						expect( record.parentHash ).toBe( parentComment.hash );
+
+						//
+						//	the wallet field is empty when submitting the query,
+						//	so `commentService.walletFavoritedKey` will undefined
+						//
+						expect( record ).not.toHaveProperty( commentService.walletFavoritedKey );
+						expect( record[ commentService.walletFavoritedKey ] ).toBe( undefined );
 					}
 				}
 			}
@@ -796,6 +1176,7 @@ describe( "CommentService", () =>
 				expect( result ).toBeGreaterThanOrEqual( 0 );
 
 				const findCommentAgain : PostType | null = await commentService.queryOne( walletObj.address, { by : 'walletAndHash', hash : savedNewComment.hash } );
+				console.log( `findCommentAgain :`, findCommentAgain );
 				expect( findCommentAgain ).toBe( null );
 			}
 

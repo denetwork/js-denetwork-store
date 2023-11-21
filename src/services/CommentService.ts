@@ -1,5 +1,5 @@
 import { PageUtil, TestUtil, TypeUtil } from "denetwork-utils";
-import { EtherWallet, Web3Validator } from "web3id";
+import { EtherWallet, Web3Digester, Web3Validator } from "web3id";
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { BaseService } from "./BaseService";
 import { Document, Error, SortOrder, Types } from "mongoose";
@@ -9,6 +9,10 @@ import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { postSchema } from "../entities/PostEntity";
 import { resultErrors } from "../constants/ResultErrors";
+import _ from "lodash";
+import { isAddress } from "ethers";
+import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
+import { ERefDataTypes } from "../models/ERefDataTypes";
 
 /**
  * 	class CommentService
@@ -76,6 +80,18 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				//	...
 				await this.connect();
 				const savedDoc : Document<CommentType> = await commentModel.save();
+
+				//
+				//	update .childrenCount of parent comment
+				//
+				if ( Web3Digester.isValidHash( data.parentHash ) )
+				{
+					const parentComment : CommentType = await this._queryOneByHash( ``, data.parentHash );
+					if ( parentComment )
+					{
+						await this._updateCommentStatistics( parentComment.wallet, parentComment.hash, 'statisticChildrenCount', 1 );
+					}
+				}
 
 				//	...
 				resolve( savedDoc.toObject() );
@@ -147,7 +163,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				}
 				if ( statisticKeys.includes( data.key ) )
 				{
-					const result : CommentType | null = await this._updateStatistics( wallet, data.hash, data.key, data.value );
+					const result : CommentType | null = await this._updateCommentStatistics( wallet, data.hash, data.key, data.value );
 					return resolve( result );
 				}
 
@@ -168,7 +184,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	 *	@param value	{number} 1 or -1
 	 *	@returns {Promise< CommentType | null >}
 	 */
-	private _updateStatistics( wallet : string, hash : string, key : string, value : 1 | -1 ) : Promise< CommentType | null >
+	private _updateCommentStatistics( wallet : string, hash : string, key : string, value : 1 | -1 ) : Promise< CommentType | null >
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -208,15 +224,20 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				}
 
 				await this.connect();
-				const find : CommentType | null = await this._queryOneByWalletAndHash( wallet, hash );
+				const find : CommentType | null = await CommentModel
+					.findOne()
+					.byWalletAndHash( wallet, hash )
+					.lean<CommentType>()
+					.exec();
 				if ( find )
 				{
-					const newValue : number = find[ key ] + ( 1 === value ? 1 : -1 );
+					const orgValue : number = _.has( find, key ) ? find[ key ] : 0;
+					const newValue : number = orgValue + ( 1 === value ? 1 : -1 );
 					const update : Record<string, any> = { [ key ] : newValue >= 0 ? newValue : 0 };
-					const savedPost : CommentType | null = await CommentModel.findOneAndUpdate( find, update, { new : true } ).lean<CommentType>();
+					const savedComment : CommentType | null = await CommentModel.findOneAndUpdate( find, update, { new : true } ).lean<CommentType>();
 
 					//	...
-					return resolve( savedPost );
+					return resolve( savedComment );
 				}
 
 				resolve( null );
@@ -272,7 +293,11 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 
 				//	...
 				await this.connect();
-				const find : CommentType | null = await this._queryOneByWalletAndHash( wallet, data.hash );
+				const find : CommentType | null = await CommentModel
+					.findOne()
+					.byWalletAndHash( wallet, data.hash )
+					.lean<CommentType>()
+					.exec();
 				if ( find )
 				{
 					const update = { deleted : find._id.toHexString() };
@@ -302,10 +327,6 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 		{
 			try
 			{
-				if ( ! EtherWallet.isValidAddress( wallet ) )
-				{
-					return reject( `invalid wallet` );
-				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
 					return reject( `invalid data, missing key : by` );
@@ -316,7 +337,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 					case 'walletAndHash' :
 						return resolve( await this._queryOneByWalletAndHash( wallet, data.hash ) );
 					case 'hash' :
-						return resolve( await this._queryOneByHash( data.hash ) );
+						return resolve( await this._queryOneByHash( wallet, data.hash ) );
 				}
 
 				resolve( null );
@@ -348,9 +369,14 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				switch ( data.by )
 				{
 					case 'walletAndPostHash' :
+						//	retrieve all my comments in a post
 						return resolve( await this._queryListByWalletAndPostHash( wallet, data.postHash, data.options ) );
 					case 'postHash' :
-						return resolve( await this._queryListByPostHash( data.postHash, data.options ) );
+						//	retrieve all comments in a post
+						return resolve( await this._queryListByPostHash( wallet, data.postHash, data.options ) );
+					case 'postHashAndParentHash' :
+						//	retrieve all replies(children comments) to a comment in a post
+						return resolve( await this._queryListByPostHashAndParentHash( wallet, data.postHash, data.parentHash, data.options ) );
 				}
 
 				//	...
@@ -392,6 +418,11 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 					.exec();
 				if ( record )
 				{
+					record[ this.walletFavoritedKey ] =
+						Web3Digester.isValidHash( record.hash ) &&
+						await this.walletFavoritedComment( wallet, record.hash );
+
+					//	...
 					return resolve( record );
 				}
 
@@ -405,10 +436,11 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 	}
 
 	/**
-	 *	@param hash	{string}	a 66-character hexadecimal string
+	 *	@param wallet	{string}	-
+	 *	@param hash	{string}	- a 66-character hexadecimal string
 	 *	@returns {Promise< CommentType | null >}
 	 */
-	private _queryOneByHash( hash : string ) : Promise<CommentType | null>
+	private _queryOneByHash( wallet : string, hash : string ) : Promise<CommentType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -427,63 +459,18 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 					.exec();
 				if ( record )
 				{
+					if ( isAddress( wallet ) )
+					{
+						record[ this.walletFavoritedKey ] =
+							Web3Digester.isValidHash( record.hash ) &&
+							await this.walletFavoritedComment( wallet, record.hash );
+					}
+
+					//	...
 					return resolve( record );
 				}
 
 				resolve( null );
-			}
-			catch ( err )
-			{
-				reject( err );
-			}
-		} );
-	}
-
-	/**
-	 *	@param postHash		{string}		post hash
-	 *	@param options		{TQueueListOptions}
-	 *	@returns {Promise<CommentListResult>}
-	 */
-	private _queryListByPostHash( postHash : string, options ?: TQueueListOptions ) : Promise<CommentListResult>
-	{
-		return new Promise( async ( resolve, reject ) =>
-		{
-			try
-			{
-				if ( ! SchemaUtil.isValidKeccak256Hash( postHash ) )
-				{
-					return reject( `invalid postHash` );
-				}
-
-				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
-				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
-				const skip = ( pageNo - 1 ) * pageSize;
-				const sortBy : { [ key : string ] : SortOrder } = QueryUtil.getSafeSortBy( options?.sort );
-
-				let result : CommentListResult = {
-					total : 0,
-					pageNo : pageNo,
-					pageSize : pageSize,
-					list : [],
-				};
-
-				await this.connect();
-				const comments : Array<CommentType> = await CommentModel
-					.find()
-					.byPostHash( postHash )
-					.sort( sortBy )
-					.skip( skip )
-					.limit( pageSize )
-					.lean<Array<CommentType>>()
-					.exec();
-				if ( Array.isArray( comments ) )
-				{
-					result.list = comments;
-					result.total = comments.length;
-				}
-
-				//	...
-				resolve( result );
 			}
 			catch ( err )
 			{
@@ -528,7 +515,7 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 
 				await this.connect();
 				const comments : Array<CommentType> = await CommentModel
-					.find()
+					.find( { parentHash : { $exists: false } } )
 					.byWalletAndPostHash( wallet, postHash )
 					.sort( sortBy )
 					.skip( skip )
@@ -537,6 +524,14 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 					.exec();
 				if ( Array.isArray( comments ) )
 				{
+					for ( let i = 0; i < comments.length; i ++ )
+					{
+						comments[ i ][ this.walletFavoritedKey ] =
+							Web3Digester.isValidHash( comments[ i ].hash ) &&
+							await this.walletFavoritedComment( wallet, comments[ i ].hash );
+					}
+
+					//	...
 					result.list = comments;
 					result.total = comments.length;
 				}
@@ -549,6 +544,179 @@ export class CommentService extends BaseService implements IWeb3StoreService< Co
 				reject( err );
 			}
 		} );
+	}
+
+	/**
+	 *	@param [wallet]		{string}		- optional wallet address, if user specialized, will return fav info
+	 *	@param postHash		{string}		- post hash
+	 *	@param options		{TQueueListOptions}
+	 *	@returns {Promise<CommentListResult>}
+	 */
+	private _queryListByPostHash( wallet : string, postHash : string, options ?: TQueueListOptions ) : Promise<CommentListResult>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! SchemaUtil.isValidKeccak256Hash( postHash ) )
+				{
+					return reject( `invalid postHash` );
+				}
+
+				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
+				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
+				const skip = ( pageNo - 1 ) * pageSize;
+				const sortBy : { [ key : string ] : SortOrder } = QueryUtil.getSafeSortBy( options?.sort );
+
+				let result : CommentListResult = {
+					total : 0,
+					pageNo : pageNo,
+					pageSize : pageSize,
+					list : [],
+				};
+
+				await this.connect();
+				const comments : Array<CommentType> = await CommentModel
+					.find( { parentHash : { $exists: false } } )
+					.byPostHash( postHash )
+					.sort( sortBy )
+					.skip( skip )
+					.limit( pageSize )
+					.lean<Array<CommentType>>()
+					.exec();
+				if ( Array.isArray( comments ) )
+				{
+					if ( isAddress( wallet ) )
+					{
+						for ( let i = 0; i < comments.length; i ++ )
+						{
+							comments[ i ][ this.walletFavoritedKey ] =
+								Web3Digester.isValidHash( comments[ i ].hash ) &&
+								await this.walletFavoritedComment( wallet, comments[ i ].hash );
+						}
+					}
+
+					//	...
+					result.list = comments;
+					result.total = comments.length;
+				}
+
+				//	...
+				resolve( result );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+	/**
+	 *	@param [wallet]		{string}		- optional wallet address, if user specialized, will return fav info
+	 *	@param postHash		{string}		- post hash
+	 *	@param parentHash	{string}		- parent comment hash
+	 *	@param options		{TQueueListOptions}
+	 *	@returns {Promise<CommentListResult>}
+	 */
+	private _queryListByPostHashAndParentHash( wallet : string, postHash : string, parentHash : string, options ?: TQueueListOptions ) : Promise<CommentListResult>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! SchemaUtil.isValidKeccak256Hash( postHash ) )
+				{
+					return reject( `invalid postHash` );
+				}
+				if ( ! SchemaUtil.isValidKeccak256Hash( parentHash ) )
+				{
+					return reject( `invalid parentHash` );
+				}
+
+				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
+				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
+				const skip = ( pageNo - 1 ) * pageSize;
+				const sortBy : { [ key : string ] : SortOrder } = QueryUtil.getSafeSortBy( options?.sort );
+
+				let result : CommentListResult = {
+					total : 0,
+					pageNo : pageNo,
+					pageSize : pageSize,
+					list : [],
+				};
+
+				await this.connect();
+				const comments : Array<CommentType> = await CommentModel
+					.find()
+					.byPostHashAndParentHash( postHash, parentHash )
+					.sort( sortBy )
+					.skip( skip )
+					.limit( pageSize )
+					.lean<Array<CommentType>>()
+					.exec();
+				if ( Array.isArray( comments ) )
+				{
+					if ( isAddress( wallet ) )
+					{
+						for ( let i = 0; i < comments.length; i ++ )
+						{
+							comments[ i ][ this.walletFavoritedKey ] =
+								Web3Digester.isValidHash( comments[ i ].hash ) &&
+								await this.walletFavoritedComment( wallet, comments[ i ].hash );
+						}
+					}
+
+					result.list = comments;
+					result.total = comments.length;
+				}
+
+				//	...
+				resolve( result );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+	public get walletFavoritedKey() : string
+	{
+		return `_walletFavorited`;
+	}
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param commentHash	{string}
+	 *	@returns {Promise<boolean>}
+	 */
+	public walletFavoritedComment( wallet : string, commentHash : string ) : Promise<boolean>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! isAddress( wallet ) )
+				{
+					return reject( `invalid wallet` );
+				}
+				if ( ! Web3Digester.isValidHash( commentHash ) )
+				{
+					return reject( `invalid commentHash` );
+				}
+
+				const favRecord = await FavoriteModel
+					.findOne()
+					.byWalletAndRefTypeAndRefHash( wallet, ERefDataTypes.comment, commentHash )
+					.lean<FavoriteType>()
+					.exec();
+				resolve( ( !! favRecord ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		});
 	}
 
 	/**

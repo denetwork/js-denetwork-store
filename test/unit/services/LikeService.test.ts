@@ -235,10 +235,16 @@ describe( "LikeService", () =>
 
 		}, 60 * 10e3 );
 
-		it( "should return a record by refType and refHash", async () =>
+		it( "should return a record by walletAndRefTypeAndRefHash", async () =>
 		{
 			const likeService = new LikeService();
-			const result : LikeType | null = await likeService.queryOne( walletObj.address, { by : 'walletAndRefTypeAndRefHash', refType : ERefDataTypes.post, refHash : savedPost.hash } );
+			const result : LikeType | null = await likeService.queryOne(
+				walletObj.address,
+				{ by : 'walletAndRefTypeAndRefHash',
+					refType : ERefDataTypes.post,
+					refHash : savedPost.hash
+				}
+			);
 			expect( result ).not.toBe( null );
 			expect( result ).toBeDefined();
 			//

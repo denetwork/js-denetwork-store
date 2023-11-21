@@ -59,8 +59,6 @@ export const favoriteSchema = new Schema( {
 				hash : hash
 			} );
 		},
-
-
 		byWalletAndRefTypeAndRefHash( wallet : string, refType : ERefDataTypes, refHash : string )
 		{
 			//	find one

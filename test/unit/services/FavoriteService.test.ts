@@ -324,6 +324,57 @@ describe( "FavoriteService", () =>
 			}
 
 		}, 60 * 10e3 );
+
+		//	walletAndRefTypeAndRefHash
+
+		it( "should return a record by walletAndRefTypeAndRefHash", async () =>
+		{
+			expect( savedFavorite ).toBeDefined();
+			expect( savedFavorite ).toHaveProperty( 'hash' );
+
+			const favoriteService = new FavoriteService();
+			const result : FavoriteType | null = await favoriteService.queryOne(
+				walletObj.address,
+				{ by : 'walletAndRefTypeAndRefHash',
+					refType : ERefDataTypes.post,
+					refHash : savedPost.hash,
+				}
+			);
+			expect( result ).not.toBe( null );
+			expect( result ).toBeDefined();
+			//
+			//    console.log( result );
+			//    {
+			//       _id: new ObjectId("650224f4e471e1a1637722d2"),
+			//       timestamp: 1694639348227,
+			//       hash: '0xcbc70ff34e94695aa4695b192f8c05b2ce862d595c6744539efda3e67d79cebf',
+			//       version: '1.0.0',
+			//       deleted: new ObjectId("000000000000000000000000"),
+			//       wallet: '0xC8F60EaF5988aC37a2963aC5Fabe97f709d6b357',
+			//       sig: '0x2370448b6d72d4f02b335d35a6f0ebf5f8fc09744530e2e72480d0e245c301cd7d396af0c611fc97473d04e411aa8f7c1ef18fb9f22499b9846e6098e67e7b131c',
+			//       address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+			//       name: 'Sam',
+			//       avatar: 'https://avatars.githubusercontent.com/u/142800322?v=4',
+			//       remark: 'no remark',
+			//       createdAt: 2023-09-13T21:09:08.227Z,
+			//       updatedAt: 2023-09-13T21:09:08.227Z,
+			//       __v: 0
+			//     }
+			//
+			if ( result )
+			{
+				const requiredKeys : Array<string> | null = SchemaUtil.getRequiredKeys( favoriteSchema );
+				expect( Array.isArray( requiredKeys ) ).toBeTruthy();
+				if ( requiredKeys )
+				{
+					for ( const key of requiredKeys )
+					{
+						expect( result ).toHaveProperty( key );
+					}
+				}
+			}
+
+		}, 60 * 10e3 );
 	} );
 
 	describe( "Updating", () =>

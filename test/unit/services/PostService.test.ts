@@ -124,7 +124,52 @@ describe( "PostService", () =>
 
 	describe( "Query one", () =>
 	{
-		it( "should return a record by wallet and address from database", async () =>
+		it( "should return a record queried by hash", async () =>
+		{
+			const postService = new PostService();
+			const result : PostType | null = await postService.queryOne( ``, { by : 'hash', hash : savedPost.hash } );
+			//
+			//    console.log( result );
+			//    {
+			//       _id: new ObjectId("64fdb1a6d04b9d62081581fb"),
+			//       version: '1.0.0',
+			//       deleted: new ObjectId("000000000000000000000000"),
+			//       wallet: '0xC8F60EaF5988aC37a2963aC5Fabe97f709d6b357',
+			//       sig: '0x6db7684cb68625a938bac35da7e4fd1c22b5736d75c7beca90cb407667077ee320bad6932c9fc9d11d027dc74dfa5417d18dbca97e68d117d1bcb592573d008c1c',
+			//       authorName: 'XING',
+			//       authorAvatar: 'https://avatars.githubusercontent.com/u/142800322?v=4',
+			//       body: 'Hello 1',
+			//       pictures: [],
+			//       videos: [],
+			//       bitcoinPrice: '25888',
+			//       statisticView: 0,
+			//       statisticRepost: 0,
+			//       statisticQuote: 0,
+			//       statisticLike: 0,
+			//       statisticFavorite: 0,
+			//       statisticReply: 0,
+			//       remark: 'no ...',
+			//       createdAt: 2023-09-10T12:08:06.724Z,
+			//       updatedAt: 2023-09-10T12:08:06.724Z,
+			//       __v: 0
+			//     }
+			//
+			if ( result )
+			{
+				const requiredKeys : Array<string> | null = SchemaUtil.getRequiredKeys( postSchema );
+				expect( Array.isArray( requiredKeys ) ).toBeTruthy();
+				if ( requiredKeys )
+				{
+					for ( const key of requiredKeys )
+					{
+						expect( result ).toHaveProperty( key );
+					}
+				}
+			}
+
+		}, 60 * 10e3 );
+
+		it( "should return a record queried by wallet and hash", async () =>
 		{
 			//
 			//	create a wallet by mnemonic

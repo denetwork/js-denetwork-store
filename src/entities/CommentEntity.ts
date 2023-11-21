@@ -39,6 +39,26 @@ export const commentSchema = new Schema( {
 		},
 		required: [ true, '{PATH} required' ]
 	},
+	parentHash : {
+		//	[optional] parent comment hash
+		//	Keccak-256(SHA-3), see the hash value of the Ethereum data block
+		type : String,
+		validate: {
+			//	Starts with "0x" (case-insensitive)
+			validator : ( v: string ) => SchemaUtil.isValidKeccak256Hash( v ),
+			message: ( props: any ) : string => `invalid ${props.path}, must be 66 lowercase hex characters`
+		},
+		required: false
+	},
+	statisticChildrenCount : {
+		//	[optional] children count
+		type : Number,
+		validate: {
+			validator : ( v: number ) => v >= 0,
+			message: ( props: any ) : string => `invalid ${ props.path }`
+		},
+		required: false
+	},
 	replyTo : {
 		//	Reply to the specified author name. @authorName
 		type : String,
@@ -76,7 +96,7 @@ export const commentSchema = new Schema( {
 		required: false
 	},
 	postSnippet : {
-		//	post body snippet
+		//	post-body snippet
 		type : String,
 		validate: {
 			validator : ( v: any ) => TypeUtil.isNotEmptyString( v ) && v.length < 2048,
@@ -147,13 +167,6 @@ export const commentSchema = new Schema( {
 }, {
 	timestamps: true,
 	query: {
-		byPostHash( postHash : string )
-		{
-			return this.where({
-				deleted : Types.ObjectId.createFromTime( 0 ).toHexString(),
-				postHash : postHash,
-			} );
-		},
 		byWalletAndPostHash( wallet: string, postHash ?: string )
 		{
 			if ( SchemaUtil.isValidKeccak256Hash( postHash ) )
@@ -171,6 +184,21 @@ export const commentSchema = new Schema( {
 					wallet : wallet
 				} );
 			}
+		},
+		byPostHash( postHash : string )
+		{
+			return this.where({
+				deleted : Types.ObjectId.createFromTime( 0 ).toHexString(),
+				postHash : postHash
+			} );
+		},
+		byPostHashAndParentHash( postHash : string, parentHash : string )
+		{
+			return this.where({
+				deleted : Types.ObjectId.createFromTime( 0 ).toHexString(),
+				postHash : postHash,
+				parentHash : parentHash,
+			} );
 		},
 		byWalletAndId( wallet: string, id : Types.ObjectId )
 		{

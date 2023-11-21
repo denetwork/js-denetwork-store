@@ -385,10 +385,6 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 		{
 			try
 			{
-				if ( ! EtherWallet.isValidAddress( wallet ) )
-				{
-					return reject( `invalid wallet` );
-				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
 					return reject( `invalid data, missing key : by` );
@@ -396,6 +392,8 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 
 				switch ( data.by )
 				{
+					case 'hash' :
+						return resolve( await this._queryOneByHash( data.hash ) );
 					case 'walletAndHash' :
 						return resolve( await this._queryOneByWalletAndHash( wallet, data.hash ) );
 				}
@@ -440,6 +438,42 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 
 				//	...
 				resolve( this.getListResultDefaultValue<PostListResult>( data ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+
+	/**
+	 *	@param hash	{string}	a 66-character hexadecimal string
+	 *	@returns {Promise< PostType | null >}
+	 */
+	private _queryOneByHash( hash : string ) : Promise<PostType | null>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! TypeUtil.isNotEmptyString( hash ) )
+				{
+					return reject( `invalid hash` );
+				}
+
+				await this.connect();
+				const record = await PostModel
+					.findOne()
+					.byHash( hash )
+					.lean<PostType>()
+					.exec();
+				if ( record )
+				{
+					return resolve( record );
+				}
+
+				resolve( null );
 			}
 			catch ( err )
 			{

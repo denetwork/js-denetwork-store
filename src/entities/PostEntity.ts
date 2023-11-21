@@ -154,6 +154,14 @@ export const postSchema = new Schema( {
 				wallet : wallet
 			} );
 		},
+		byHash( hash : string )
+		{
+			//	find one
+			return this.where( {
+				deleted : Types.ObjectId.createFromTime( 0 ).toHexString(),
+				hash : hash,
+			} );
+		},
 		byRefAuthorWallet( refAuthorWallet : string )
 		{
 			return this.where( {

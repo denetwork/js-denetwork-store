@@ -2,8 +2,7 @@
 	"name": "denetwork-store",
 	"version": "1.0.22",
 	"description": "DeNetwork Store Unit",
-	"keywords": [
-	],
+	"keywords": [],
 	"leadMaintainer": "DeNetwork, Team.",
 	"main": "dist/index.js",
 	"browser": "dist/index.js",
@@ -32,15 +31,15 @@
 		"ts-node": "^10.9.1"
 	},
 	"dependencies": {
-		"denetwork-utils": "^1.0.31",
 		"crypto-js": "^4.1.1",
+		"denetwork-utils": "^1.0.31",
 		"dotenv": "^16.3.1",
 		"ethers": "^6.7.1",
 		"idb": "^7.1.1",
 		"lodash": "^4.17.21",
 		"mongoose": "^7.4.3",
 		"uuid": "^9.0.0",
-		"web3id": "^1.0.0"
+		"web3id": "^1.0.15"
 	},
 	"author": "DeNetwork, Team.",
 	"homepage": "https://github.com/denetwork/",

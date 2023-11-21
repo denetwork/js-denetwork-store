@@ -56,6 +56,14 @@ export const MBaseEntity : any = {
 		},
 		required: [ true, '{PATH} required' ]
 	},
+	bitcoinPrice : {
+		type : Number,
+		validate: {
+			validator : ( v: any ) => TypeUtil.isNumeric( v ) && v > 0,
+			message: ( props: any ) : string => `invalid ${props.path}, should be greater than 0`
+		},
+		required: false
+	},
 	sig : {
 		//	signature
 		//	Must be lowercase and 132 characters long

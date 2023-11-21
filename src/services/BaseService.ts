@@ -5,9 +5,6 @@ import { PostModel } from "../entities/PostEntity";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { ERefDataTypes } from "../models/ERefDataTypes";
 import { CommentModel } from "../entities/CommentEntity";
-import { isAddress } from "ethers";
-import { Web3Digester } from "web3id";
-import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
 
 
 export abstract class BaseService extends DatabaseConnection

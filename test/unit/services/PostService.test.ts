@@ -220,12 +220,12 @@ describe( "PostService", () =>
 		}, 60 * 10e3 );
 	} );
 
-	describe( "Query one with my favorite", () =>
+	describe( "Query one with my favorite and like", () =>
 	{
 		const mnemonic : string = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
 		const walletObj : TWalletBaseItem = EtherWallet.createWalletFromMnemonic( mnemonic );
 
-		it( "should return a record by wallet and hash with key `_walletFavorited`", async () =>
+		it( "should return a record with key `_walletFavorited` and `_walletLiked`", async () =>
 		{
 			//
 			//	favorite this comment
@@ -290,7 +290,7 @@ describe( "PostService", () =>
 			//	query the post
 			//
 			const postService = new PostService();
-			const result : PostType | null = await postService.queryOne( walletObj.address, { by : 'walletAndHash', hash : savedPost.hash } );
+			const result : PostType | null = await postService.queryOne( walletObj.address, { by : 'hash', hash : savedPost.hash } );
 			expect( result ).toBeDefined();
 			expect( result ).toHaveProperty( postService.walletFavoritedKey );
 			expect( result[ postService.walletFavoritedKey ] ).toBeTruthy();

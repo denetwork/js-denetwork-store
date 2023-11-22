@@ -1,6 +1,6 @@
 import { model, Schema, InferSchemaType, Types, Document } from 'mongoose';
 import { TypeUtil } from "denetwork-utils";
-import { TQueueListResult } from "../models/TQuery";
+import { TQueryListResult } from "../models/TQuery";
 import { MBaseEntity } from "../models/MBaseEntity";
 import { EtherWallet } from "web3id";
 import { MRemarkEntity } from "../models/MRemarkEntity";
@@ -86,7 +86,7 @@ export type ContactType = InferSchemaType< typeof contactSchema > & Document<Typ
 //	remark ?: string;
 // }
 
-export type ContactListResult = TQueueListResult &
+export type ContactListResult = TQueryListResult &
 {
 	list : Array< ContactType >;
 }

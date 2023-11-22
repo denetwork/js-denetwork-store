@@ -3,7 +3,7 @@ import { FollowerListResult, followerSchema, FollowerType } from "../../../src";
 import { EtherWallet, Web3Signer, TWalletBaseItem, Web3Digester } from "web3id";
 import { ethers } from "ethers";
 import { DatabaseConnection } from "../../../src";
-import { TQueueListOptions } from "../../../src/models/TQuery";
+import { TQueryListOptions } from "../../../src/models/TQuery";
 import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { FollowerService } from "../../../src";
@@ -41,7 +41,7 @@ describe( "FollowerService", () =>
 	} );
 
 	//	...
-	const oneFollowerAddress : string = `0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045`;
+	const followeeAddress : string = `0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045`.trim().toLowerCase();
 
 	describe( "Add record", () =>
 	{
@@ -56,7 +56,7 @@ describe( "FollowerService", () =>
 				version : '1.0.0',
 				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
 				wallet : walletObj.address,
-				address : oneFollowerAddress,
+				address : followeeAddress,
 				sig : ``,
 				name : `Sam`,
 				avatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
@@ -131,10 +131,10 @@ describe( "FollowerService", () =>
 
 	describe( "Query one", () =>
 	{
-		it( "should return a record by wallet and address from database", async () =>
+		it( "should return a record by wallet and address", async () =>
 		{
 			const followerService = new FollowerService();
-			const result : FollowerType | null = await followerService.queryOne( walletObj.address, { by : 'walletAndAddress', address : oneFollowerAddress } );
+			const result : FollowerType | null = await followerService.queryOne( walletObj.address, { by : 'walletAndAddress', address : followeeAddress } );
 			expect( result ).not.toBe( null );
 			expect( result ).toBeDefined();
 			//
@@ -178,7 +178,7 @@ describe( "FollowerService", () =>
 		it( "should return a list of records from database", async () =>
 		{
 			const followerService = new FollowerService();
-			const results : FollowerListResult = await followerService.queryList( walletObj.address, { by : 'walletAndAddress', address : oneFollowerAddress } );
+			const results : FollowerListResult = await followerService.queryList( walletObj.address, { by : 'walletAndAddress', address : followeeAddress } );
 			expect( results ).toHaveProperty( 'total' );
 			expect( results ).toHaveProperty( 'list' );
 			//
@@ -265,7 +265,7 @@ describe( "FollowerService", () =>
 			//
 			for ( let page = 1; page <= 10; page ++ )
 			{
-				const options : TQueueListOptions = {
+				const options : TQueryListOptions = {
 					pageNo : page,
 					pageSize : 10
 				};

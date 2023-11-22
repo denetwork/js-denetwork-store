@@ -1,6 +1,6 @@
 import { model, Schema, InferSchemaType, Types, Document } from 'mongoose';
 import { TypeUtil } from "denetwork-utils";
-import { TQueueListResult } from "../models/TQuery";
+import { TQueryListResult } from "../models/TQuery";
 import { MBaseEntity } from "../models/MBaseEntity";
 import { EtherWallet } from "web3id";
 import { MRemarkEntity } from "../models/MRemarkEntity";
@@ -11,8 +11,8 @@ import { MRemarkEntity } from "../models/MRemarkEntity";
 export const followerSchema = new Schema( {
 	...MBaseEntity,
 	address : {
-		//	follower's wallet address, CASE SENSITIVE
-		//	e.g.: `0xC8F60EaF5988aC37a2963aC5Fabe97f709d6b357`
+		//	follower's wallet address, CASE INSENSITIVE
+		//	e.g.: `0xc8f60eaf5988ac37a2963ac5fabe97f709d6b357`
 		type : String,
 		validate : {
 			validator : ( v : string ) => TypeUtil.isNotEmptyString( v ) && EtherWallet.isValidAddress( v ),
@@ -103,7 +103,7 @@ export type FollowerType = InferSchemaType<typeof followerSchema> & Document<Typ
 //	remark ?: string;
 // }
 
-export type FollowerListResult = TQueueListResult &
+export type FollowerListResult = TQueryListResult &
 	{
 		list : Array<FollowerType>;
 	}

@@ -1,5 +1,5 @@
 import { model, Schema, InferSchemaType, Types, Document } from 'mongoose';
-import { TQueueListResult } from "../models/TQuery";
+import { TQueryListResult } from "../models/TQuery";
 import { MBaseEntity } from "../models/MBaseEntity";
 import { MRemarkEntity } from "../models/MRemarkEntity";
 import { MRefEntity } from "../models/MRefEntity";
@@ -116,7 +116,7 @@ export type LikeType = InferSchemaType< typeof likeSchema > & Document<Types.Obj
 //	remark ?: string;
 // }
 
-export type LikeListResult = TQueueListResult &
+export type LikeListResult = TQueryListResult &
 {
 	list : Array< LikeType >;
 }

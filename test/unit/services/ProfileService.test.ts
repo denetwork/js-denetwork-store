@@ -10,7 +10,7 @@ import { DatabaseConnection } from "../../../src";
 import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { ProfileService } from "../../../src";
-import { TQueueListOptions } from "../../../src/models/TQuery";
+import { TQueryListOptions } from "../../../src/models/TQuery";
 import { resultErrors } from "../../../src";
 import { ContactType } from "../../../src";
 
@@ -430,7 +430,7 @@ describe( "ProfileService", () =>
 			//
 			for ( let page = 1; page <= 10; page ++ )
 			{
-				const options : TQueueListOptions = {
+				const options : TQueryListOptions = {
 					pageNo : page,
 					pageSize : 10
 				};

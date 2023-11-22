@@ -4,7 +4,7 @@ import { FollowerListResult, FollowerModel, FollowerType } from "../entities/Fol
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { BaseService } from "./BaseService";
 import { Document, Error, SortOrder, Types } from "mongoose";
-import { TQueueListOptions } from "../models/TQuery";
+import { TQueryListOptions } from "../models/TQuery";
 import { QueryUtil } from "../utils/QueryUtil";
 import { resultErrors } from "../constants/ResultErrors";
 
@@ -252,7 +252,19 @@ export class FollowerService extends BaseService implements IWeb3StoreService<Fo
 				switch ( data.by )
 				{
 					case 'walletAndAddress' :
+						//	wallet - means follower
+						//	this will return a followee list
 						return resolve( await this._queryListByWalletAndAddress( wallet, data.address, data.options ) );
+					case 'wallet' :
+						//	wallet - means follower
+						//	this will return a followee list
+						return resolve( await this._queryListByWalletAndAddress( wallet, undefined, data.options ) );
+					case 'address' :
+						//
+						//	address - means followee
+						//	This will return a followers list of the followee(person being followed)
+						//
+						return resolve( await this._queryListByAddress( data.address, data.options ) );
 				}
 
 				//	...
@@ -348,10 +360,10 @@ export class FollowerService extends BaseService implements IWeb3StoreService<Fo
 	/**
 	 *	@param wallet		{string}	wallet address
 	 *	@param address		{string}	contact wallet address
-	 *	@param options	{TQueueListOptions}
+	 *	@param options	{TQueryListOptions}
 	 *	@returns {Promise<ContactListResult>}
 	 */
-	private _queryListByWalletAndAddress( wallet : string, address ? : string, options ? : TQueueListOptions ) : Promise<FollowerListResult>
+	private _queryListByWalletAndAddress( wallet : string, address ? : string, options ? : TQueryListOptions ) : Promise<FollowerListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -380,6 +392,61 @@ export class FollowerService extends BaseService implements IWeb3StoreService<Fo
 				const contacts : Array<FollowerType> = await FollowerModel
 					.find()
 					.byWalletAndAddress( wallet, address )
+					.sort( sortBy )
+					.skip( skip )
+					.limit( pageSize )
+					.lean<Array<FollowerType>>()
+					.exec();
+				if ( Array.isArray( contacts ) )
+				{
+					result.list = contacts;
+					result.total = contacts.length;
+				}
+
+				//	...
+				resolve( result );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+	/**
+	 *	@param address		{string}	contact wallet address
+	 *	@param options	{TQueryListOptions}
+	 *	@returns {Promise<ContactListResult>}
+	 */
+	private _queryListByAddress( address : string, options ? : TQueryListOptions ) : Promise<FollowerListResult>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! EtherWallet.isValidAddress( address ) )
+				{
+					return reject( `invalid address` );
+				}
+
+				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
+				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
+				const skip = ( pageNo - 1 ) * pageSize;
+				const sortBy : {
+					[ key : string ] : SortOrder
+				} = QueryUtil.getSafeSortBy( options?.sort );
+
+				let result : FollowerListResult = {
+					total : 0,
+					pageNo : pageNo,
+					pageSize : pageSize,
+					list : [],
+				};
+
+				await this.connect();
+				const contacts : Array<FollowerType> = await FollowerModel
+					.find()
+					.byAddress( address )
 					.sort( sortBy )
 					.skip( skip )
 					.limit( pageSize )

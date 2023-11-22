@@ -1,6 +1,6 @@
 import { model, Schema, InferSchemaType, Types, Document } from 'mongoose';
 import { TypeUtil } from "denetwork-utils";
-import { TQueueListResult } from "../models/TQuery";
+import { TQueryListResult } from "../models/TQuery";
 import { MBaseEntity } from "../models/MBaseEntity";
 import { MStatisticEntity } from "../models/MStatisticEntity";
 import { MRemarkEntity } from "../models/MRemarkEntity";
@@ -181,7 +181,7 @@ export type PostType = InferSchemaType<typeof postSchema> & Document<Types.Objec
 //	...
 // }
 
-export type PostListResult = TQueueListResult &
+export type PostListResult = TQueryListResult &
 	{
 		list : Array<PostType>;
 	}

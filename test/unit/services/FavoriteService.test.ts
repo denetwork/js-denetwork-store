@@ -15,7 +15,7 @@ import {
 import { EtherWallet, TWalletBaseItem, Web3Digester, Web3Signer } from "web3id";
 import { ethers } from "ethers";
 import { TestUtil } from "denetwork-utils";
-import { TQueueListOptions } from "../../../src/models/TQuery";
+import { TQueryListOptions } from "../../../src/models/TQuery";
 
 
 /**
@@ -839,7 +839,7 @@ describe( "FavoriteService", () =>
 			//
 			for ( let page = 1; page <= 10; page ++ )
 			{
-				const options : TQueueListOptions = {
+				const options : TQueryListOptions = {
 					pageNo : page,
 					pageSize : 10
 				};

@@ -3,7 +3,7 @@ import { EtherWallet, Web3Digester, Web3Validator } from "web3id";
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { BaseService } from "./BaseService";
 import { Document, Error, SortOrder, Types } from "mongoose";
-import { TQueueListOptions } from "../models/TQuery";
+import { TQueryListOptions } from "../models/TQuery";
 import { CommentListResult, CommentModel, commentSchema, CommentType } from "../entities/CommentEntity";
 import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
@@ -482,10 +482,10 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 	/**
 	 *	@param wallet		{string}	wallet address
 	 *	@param postHash		{string}	post hash
-	 *	@param options	{TQueueListOptions}
+	 *	@param options	{TQueryListOptions}
 	 *	@returns {Promise<CommentListResult>}
 	 */
-	private _queryListByWalletAndPostHash( wallet : string, postHash ? : string, options ? : TQueueListOptions ) : Promise<CommentListResult>
+	private _queryListByWalletAndPostHash( wallet : string, postHash ? : string, options ? : TQueryListOptions ) : Promise<CommentListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -551,10 +551,10 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 	/**
 	 *	@param [wallet]		{string}		- optional wallet address, if user specialized, will return fav info
 	 *	@param postHash		{string}		- post hash
-	 *	@param options		{TQueueListOptions}
+	 *	@param options		{TQueryListOptions}
 	 *	@returns {Promise<CommentListResult>}
 	 */
-	private _queryListByPostHash( wallet : string, postHash : string, options ? : TQueueListOptions ) : Promise<CommentListResult>
+	private _queryListByPostHash( wallet : string, postHash : string, options ? : TQueryListOptions ) : Promise<CommentListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -619,10 +619,10 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 	 *	@param [wallet]		{string}		- optional wallet address, if user specialized, will return fav info
 	 *	@param postHash		{string}		- post hash
 	 *	@param parentHash	{string}		- parent comment hash
-	 *	@param options		{TQueueListOptions}
+	 *	@param options		{TQueryListOptions}
 	 *	@returns {Promise<CommentListResult>}
 	 */
-	private _queryListByPostHashAndParentHash( wallet : string, postHash : string, parentHash : string, options ? : TQueueListOptions ) : Promise<CommentListResult>
+	private _queryListByPostHashAndParentHash( wallet : string, postHash : string, parentHash : string, options ? : TQueryListOptions ) : Promise<CommentListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{

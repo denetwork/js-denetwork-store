@@ -1,6 +1,6 @@
 import { model, Schema, InferSchemaType, Types, Document } from 'mongoose';
 import { TypeUtil } from "denetwork-utils";
-import { TQueueListResult } from "../models/TQuery";
+import { TQueryListResult } from "../models/TQuery";
 import { MBaseEntity } from "../models/MBaseEntity";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { MStatisticEntity } from "../models/MStatisticEntity";
@@ -247,7 +247,7 @@ export type CommentType = InferSchemaType< typeof commentSchema > & Document<Typ
 //	...
 // }
 
-export type CommentListResult = TQueueListResult &
+export type CommentListResult = TQueryListResult &
 {
 	list : Array< CommentType >;
 }

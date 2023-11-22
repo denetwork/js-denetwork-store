@@ -4,7 +4,7 @@ import { EtherWallet, Web3Signer, TWalletBaseItem, Web3Digester } from "web3id";
 import { ethers } from "ethers";
 import { ContactService } from "../../../src";
 import { DatabaseConnection } from "../../../src";
-import { TQueueListOptions } from "../../../src/models/TQuery";
+import { TQueryListOptions } from "../../../src/models/TQuery";
 import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { resultErrors } from "../../../src";
@@ -265,7 +265,7 @@ describe( "ContactService", () =>
 			//
 			for ( let page = 1; page <= 10; page ++ )
 			{
-				const options : TQueueListOptions = {
+				const options : TQueryListOptions = {
 					pageNo : page,
 					pageSize : 10
 				};

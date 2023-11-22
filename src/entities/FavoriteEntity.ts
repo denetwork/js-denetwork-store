@@ -1,5 +1,5 @@
 import { model, Schema, InferSchemaType, Types, Document } from 'mongoose';
-import { TQueueListResult } from "../models/TQuery";
+import { TQueryListResult } from "../models/TQuery";
 import { MBaseEntity } from "../models/MBaseEntity";
 import { MRemarkEntity } from "../models/MRemarkEntity";
 import { MRefEntity } from "../models/MRefEntity";
@@ -122,7 +122,7 @@ export type FavoriteType = InferSchemaType< typeof favoriteSchema > & Document<T
 //	remark ?: string;
 // }
 
-export type FavoriteListResult = TQueueListResult &
+export type FavoriteListResult = TQueryListResult &
 {
 	list : Array< FavoriteType >;
 }

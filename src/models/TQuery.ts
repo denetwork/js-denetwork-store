@@ -1,6 +1,6 @@
 import { SortOrder } from "mongoose";
 
-export type TQueueListOptions =
+export type TQueryListOptions =
 	{
 		pageNo? : number,
 		pageSize? : number,
@@ -8,7 +8,7 @@ export type TQueueListOptions =
 		sort? : { [ key : string ] : SortOrder },
 	};
 
-export type TQueueListResult = TQueueListOptions &
+export type TQueryListResult = TQueryListOptions &
 	{
 		total : number,
 	};

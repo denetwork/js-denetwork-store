@@ -3,7 +3,7 @@ import { EtherWallet, Web3Digester, Web3Validator } from "web3id";
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { BaseService } from "./BaseService";
 import { Document, Error, SortOrder, Types } from "mongoose";
-import { TQueueListOptions } from "../models/TQuery";
+import { TQueryListOptions } from "../models/TQuery";
 import { PostContentTypes, PostListResult, PostModel, postSchema, PostType } from "../entities/PostEntity";
 import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
@@ -555,10 +555,10 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 
 	/**
 	 *	@param wallet		{string}	wallet address
-	 *	@param options	{TQueueListOptions}
+	 *	@param options	{TQueryListOptions}
 	 *	@returns {Promise<PostListResult>}
 	 */
-	private _queryListByWallet( wallet : string, options ? : TQueueListOptions ) : Promise<PostListResult>
+	private _queryListByWallet( wallet : string, options ? : TQueryListOptions ) : Promise<PostListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -622,10 +622,10 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 	/**
 	 *	@param [wallet]			{string}	-
 	 *	@param refAuthorWallet		{string}	- wallet address
-	 *	@param options	{TQueueListOptions}
+	 *	@param options	{TQueryListOptions}
 	 *	@returns {Promise<PostListResult>}
 	 */
-	private _queryListByRefAuthorWallet( wallet : string, refAuthorWallet : string, options ? : TQueueListOptions ) : Promise<PostListResult>
+	private _queryListByRefAuthorWallet( wallet : string, refAuthorWallet : string, options ? : TQueryListOptions ) : Promise<PostListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{

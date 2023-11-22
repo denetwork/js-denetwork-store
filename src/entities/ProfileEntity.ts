@@ -1,6 +1,6 @@
 import { model, Schema, InferSchemaType, Types, Document } from 'mongoose';
 import { TypeUtil } from "denetwork-utils";
-import { TQueueListResult } from "../models/TQuery";
+import { TQueryListResult } from "../models/TQuery";
 import { MBaseEntity } from "../models/MBaseEntity";
 import { MRemarkEntity } from "../models/MRemarkEntity";
 
@@ -81,7 +81,7 @@ export type ProfileType = InferSchemaType< typeof profileSchema > & Document<Typ
 //	remark ?: string;
 // }
 
-export type ProfileListResult = TQueueListResult &
+export type ProfileListResult = TQueryListResult &
 {
 	list : Array< ProfileType >;
 }

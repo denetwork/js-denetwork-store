@@ -4,7 +4,7 @@ import { LikeListResult, LikeModel, LikeType } from "../entities/LikeEntity";
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { BaseService } from "./BaseService";
 import { Document, Error, SortOrder, Types } from "mongoose";
-import { TQueueListOptions } from "../models/TQuery";
+import { TQueryListOptions } from "../models/TQuery";
 import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
@@ -444,10 +444,10 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 	/**
 	 *	@param wallet		{string}	wallet address
 	 *	@param refType		{ERefDataTypes}
-	 *	@param options	{TQueueListOptions}
+	 *	@param options	{TQueryListOptions}
 	 *	@returns {Promise<ContactListResult>}
 	 */
-	private _queryListByWalletAndRefType( wallet : string, refType ?: ERefDataTypes, options ?: TQueueListOptions ) : Promise<LikeListResult>
+	private _queryListByWalletAndRefType( wallet : string, refType ?: ERefDataTypes, options ?: TQueryListOptions ) : Promise<LikeListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{

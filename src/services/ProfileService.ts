@@ -4,7 +4,7 @@ import { ProfileListResult, ProfileModel, ProfileType } from "../entities/Profil
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { BaseService } from "./BaseService";
 import { Document, Error, SortOrder, Types } from "mongoose";
-import { TQueueListOptions } from "../models/TQuery";
+import { TQueryListOptions } from "../models/TQuery";
 import { QueryUtil } from "../utils/QueryUtil";
 import { resultErrors } from "../constants/ResultErrors";
 
@@ -340,10 +340,10 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 
 	/**
 	 *	@param wallet		{string}	wallet address
-	 *	@param options	{TQueueListOptions}
+	 *	@param options	{TQueryListOptions}
 	 *	@returns {Promise<ContactListResult>}
 	 */
-	private _queryListByWallet( wallet : string, options ?: TQueueListOptions ) : Promise<ProfileListResult>
+	private _queryListByWallet( wallet : string, options ?: TQueryListOptions ) : Promise<ProfileListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{

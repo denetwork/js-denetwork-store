@@ -4,7 +4,7 @@ import { ContactListResult, ContactModel, ContactType } from "../entities/Contac
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { BaseService } from "./BaseService";
 import { Document, Error, SortOrder, Types } from "mongoose";
-import { TQueueListOptions } from "../models/TQuery";
+import { TQueryListOptions } from "../models/TQuery";
 import { QueryUtil } from "../utils/QueryUtil";
 import { PostType } from "../entities/PostEntity";
 import { resultErrors } from "../constants/ResultErrors";
@@ -388,10 +388,10 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 	/**
 	 *	@param wallet		{string}	wallet address
 	 *	@param address		{string}	contact wallet address
-	 *	@param options	{TQueueListOptions}
+	 *	@param options	{TQueryListOptions}
 	 *	@returns {Promise<ContactListResult>}
 	 */
-	private _queryListByWalletAndAddress( wallet : string, address ? : string, options ? : TQueueListOptions ) : Promise<ContactListResult>
+	private _queryListByWalletAndAddress( wallet : string, address ? : string, options ? : TQueryListOptions ) : Promise<ContactListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{

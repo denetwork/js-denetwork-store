@@ -24,10 +24,10 @@ export class PortalService extends BaseService
 	/**
 	 *	@param [wallet]		{string}
 	 *	@param [data]		{any}
-	 *	@param [sig]		{string}
+	 *	@param [_sig]		{string}
 	 *	@returns {Promise<PostListResult>}
 	 */
-	public queryRecommendedPostList( wallet ?: string, data ?: any, sig ?: string ) : Promise<PostListResult>
+	public queryRecommendedPostList( wallet ?: string, data ?: any, _sig ?: string ) : Promise<PostListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -93,10 +93,10 @@ export class PortalService extends BaseService
 	/**
 	 * 	@param wallet		{string}
 	 * 	@param [data]		{any}
-	 * 	@param [sig]		{string}
+	 * 	@param [_sig]		{string}
 	 * 	@returns {Promise<PostListResult>}
 	 */
-	public queryFolloweePostList( wallet : string, data ?: any, sig ?: string ) : Promise<PostListResult>
+	public queryFolloweePostList( wallet : string, data ?: any, _sig ?: string ) : Promise<PostListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{

@@ -2,7 +2,7 @@ import { BaseService } from "./BaseService";
 import { TQueryListOptions } from "../models/TQuery";
 import { PostListResult, PostModel, PostType } from "../entities/PostEntity";
 import { Web3Digester } from "web3id";
-import { PageUtil } from "denetwork-utils";
+import { PageUtil, TypeUtil } from "denetwork-utils";
 import { SortOrder, Types } from "mongoose";
 import { QueryUtil } from "../utils/QueryUtil";
 import { isAddress } from "ethers";
@@ -10,15 +10,54 @@ import { PostService } from "./PostService";
 import { FollowerService } from "./FollowerService";
 import { FollowerListResult } from "../entities/FollowerEntity";
 import _ from "lodash";
+import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
+import { resultErrors } from "../constants/ResultErrors";
 
 /**
  * 	@class
  */
-export class PortalService extends BaseService
+export class PortalService extends BaseService implements IWeb3StoreService<PostType, PostListResult>
 {
 	constructor()
 	{
 		super();
+	}
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param [data]		{any}
+	 *	@param [sig]		{string}
+	 *	@returns {Promise<PostListResult>}
+	 */
+	queryList( wallet : string, data ?: any, sig ?: string ) : Promise<PostListResult>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
+				{
+					return reject( `invalid data, missing key : by` );
+				}
+
+				switch ( data.by )
+				{
+					case 'recommendedPostList' :
+						//	wallet - required
+						return resolve( await this.queryRecommendedPostList( wallet, data, sig ) );
+					case 'followeePostList' :
+						//	wallet - optional
+						return resolve( await this.queryFolloweePostList( wallet, data, sig ) );
+				}
+
+				//	...
+				resolve( this.getListResultDefaultValue<PostListResult>( data ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
 	}
 
 	/**
@@ -188,4 +227,31 @@ export class PortalService extends BaseService
 			}
 		} );
 	}
+
+
+	add( _wallet : string, _data : PostType, _sig : string ) : Promise<PostType | null>
+	{
+		return Promise.reject( resultErrors.addingBanned );
+	}
+
+	delete( _wallet : string, _data : PostType, _sig : string ) : Promise<number>
+	{
+		return Promise.reject( resultErrors.deletingBanned );
+	}
+
+	queryOne( _wallet : string, _data : PostType, _sig : string ) : Promise<PostType | null>
+	{
+		return Promise.reject( resultErrors.queryOneBanned );
+	}
+
+	update( _wallet : string, _data : PostType, _sig : string ) : Promise<PostType | null>
+	{
+		return Promise.reject( resultErrors.updatingBanned );
+	}
+
+	updateFor( _wallet : string, _data : PostType, _sig : string ) : Promise<PostType | null>
+	{
+		return Promise.reject( resultErrors.updatingBanned );
+	}
+
 }

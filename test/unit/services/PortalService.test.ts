@@ -237,7 +237,8 @@ describe( "PortalService", () =>
 					pageSize : 30,
 					sort : { createdAt : 'desc' }
 				};
-				const results : PostListResult = await portalService.queryRecommendedPostList( walletObj.address, { options : pageOptions }, undefined );
+				//const results : PostListResult = await portalService.queryRecommendedPostList( walletObj.address, { options : pageOptions }, undefined );
+				const results : PostListResult = await portalService.queryList( walletObj.address, { by : 'recommendedPostList', options : pageOptions }, undefined );
 				expect( results ).toHaveProperty( 'total' );
 				expect( results ).toHaveProperty( 'list' );
 				expect( _.isNumber( results.total ) ).toBeTruthy();
@@ -503,7 +504,8 @@ describe( "PortalService", () =>
 					pageSize : 30,
 					sort : { createdAt : 'desc' }
 				};
-				const results : PostListResult = await portalService.queryFolloweePostList( walletObj.address, { options : pageOptions }, undefined );
+				//const results : PostListResult = await portalService.queryFolloweePostList( walletObj.address, { options : pageOptions }, undefined );
+				const results : PostListResult = await portalService.queryList( walletObj.address, { by : 'followeePostList', options : pageOptions }, undefined );
 				expect( results ).toHaveProperty( 'total' );
 				expect( results ).toHaveProperty( 'list' );
 				expect( _.isNumber( results.total ) ).toBeTruthy();

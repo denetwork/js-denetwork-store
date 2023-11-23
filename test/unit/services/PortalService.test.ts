@@ -1,6 +1,6 @@
 import { describe, expect } from '@jest/globals';
 import { EtherWallet, Web3Signer, TWalletBaseItem, Web3Digester } from "web3id";
-import { ethers, isAddress } from "ethers";
+import { isAddress } from "ethers";
 import {
 	DatabaseConnection,
 	ERefDataTypes,
@@ -15,7 +15,6 @@ import { SchemaUtil } from "../../../src";
 import { PostListResult, postSchema, PostType } from "../../../src";
 import { PostService } from "../../../src";
 import { TQueryListOptions } from "../../../src/models/TQuery";
-import { resultErrors } from "../../../src";
 import { PortalService } from "../../../src/services/PortalService";
 import _ from "lodash";
 
@@ -254,7 +253,7 @@ describe( "PortalService", () =>
 				if ( requiredKeys )
 				{
 					let recordIndex : number = 0;
-					let previousPost : PostType;
+					let previousPost : PostType = {};
 					for ( const record of results.list )
 					{
 						for ( const key of requiredKeys )
@@ -518,7 +517,7 @@ describe( "PortalService", () =>
 				if ( requiredKeys )
 				{
 					let recordIndex : number = 0;
-					let previousPost : PostType;
+					let previousPost : PostType = {};
 					for ( const record of results.list )
 					{
 						for ( const key of requiredKeys )

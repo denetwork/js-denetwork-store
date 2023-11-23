@@ -21,12 +21,19 @@ export class PortalService extends BaseService
 		super();
 	}
 
-	public queryRecommendedPostList( wallet ?: string, options ? : TQueryListOptions ) : Promise<PostListResult>
+	/**
+	 *	@param [wallet]		{string}
+	 *	@param [data]		{any}
+	 *	@param [sig]		{string}
+	 *	@returns {Promise<PostListResult>}
+	 */
+	public queryRecommendedPostList( wallet ?: string, data ?: any, sig ?: string ) : Promise<PostListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
 			try
 			{
+				const options : TQueryListOptions = data?.options;
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
 				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
 				const skip = ( pageNo - 1 ) * pageSize;
@@ -83,7 +90,13 @@ export class PortalService extends BaseService
 		} );
 	}
 
-	public queryFolloweePostList( wallet : string, options ?: TQueryListOptions ) : Promise<PostListResult>
+	/**
+	 * 	@param wallet		{string}
+	 * 	@param [data]		{any}
+	 * 	@param [sig]		{string}
+	 * 	@returns {Promise<PostListResult>}
+	 */
+	public queryFolloweePostList( wallet : string, data ?: any, sig ?: string ) : Promise<PostListResult>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -95,6 +108,7 @@ export class PortalService extends BaseService
 				}
 
 				//	...
+				const options : TQueryListOptions = data?.options;
 				const followerService = new FollowerService();
 				const postService = new PostService();
 

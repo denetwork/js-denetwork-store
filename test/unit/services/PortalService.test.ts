@@ -15,7 +15,7 @@ import { SchemaUtil } from "../../../src";
 import { PostListResult, postSchema, PostType } from "../../../src";
 import { PostService } from "../../../src";
 import { TQueryListOptions } from "../../../src/models/TQuery";
-import { PortalService } from "../../../src/services/PortalService";
+import { PortalService } from "../../../src";
 import _ from "lodash";
 
 export interface TestUser

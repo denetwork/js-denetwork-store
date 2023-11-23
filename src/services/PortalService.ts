@@ -3,7 +3,7 @@ import { TQueryListOptions } from "../models/TQuery";
 import { PostListResult, PostModel, PostType } from "../entities/PostEntity";
 import { Web3Digester } from "web3id";
 import { PageUtil } from "denetwork-utils";
-import { SortOrder } from "mongoose";
+import { SortOrder, Types } from "mongoose";
 import { QueryUtil } from "../utils/QueryUtil";
 import { isAddress } from "ethers";
 import { PostService } from "./PostService";
@@ -98,19 +98,23 @@ export class PortalService extends BaseService
 				const followerService = new FollowerService();
 				const postService = new PostService();
 
-				let followers : Array<string> = [];
-				const followerResult : FollowerListResult = await followerService.queryList(
+				let followees : Array<string> = [];
+				const followeeResult : FollowerListResult = await followerService.queryList(
 					wallet,
 					{ by : 'wallet',
 						options : {
 							pageNo : 1,
-							pageSize : 300
+							pageSize : 300,
+							sortBy : {
+								//	will be sorted by followee's wallet address
+								address : 'desc'
+							}
 						} }
 				);
-				if ( followerResult &&
-					_.has( followerResult, 'list' ) )
+				if ( followeeResult &&
+					_.has( followeeResult, 'list' ) )
 				{
-					followers = followerResult.list.map( item => String( item.address ).trim().toLowerCase() );
+					followees = followeeResult.list.map( item => String( item.address ).trim().toLowerCase() );
 				}
 
 				//	...
@@ -131,7 +135,11 @@ export class PortalService extends BaseService
 				//	...
 				await this.connect();
 				const posts : Array<PostType> = await PostModel
-					.find( { "wallet": { $in: followers } } )
+					.find()
+					.where( {
+						deleted : Types.ObjectId.createFromTime( 0 ).toHexString(),
+						wallet: { $in: followees }
+					} )
 					.sort( sortBy )
 					.skip( skip )
 					.limit( pageSize )

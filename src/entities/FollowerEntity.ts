@@ -11,7 +11,7 @@ import { MRemarkEntity } from "../models/MRemarkEntity";
 export const followerSchema = new Schema( {
 	...MBaseEntity,
 	address : {
-		//	follower's wallet address, CASE INSENSITIVE
+		//	followee's wallet address, CASE INSENSITIVE
 		//	e.g.: `0xc8f60eaf5988ac37a2963ac5fabe97f709d6b357`
 		type : String,
 		validate : {

@@ -26,7 +26,10 @@ export abstract class BaseService extends DatabaseConnection
 		super();
 		if ( _.isNumber( process.env.THROAT_CHECKING_INTERVAL ) && process.env.THROAT_CHECKING_INTERVAL >= 0 )
 		{
-			console.log( `))) will set throatCheckingInterval to ${ process.env.THROAT_CHECKING_INTERVAL }` );
+			if ( ! TestUtil.isTestEnv() )
+			{
+				console.log( `))) will set throatCheckingInterval to ${ process.env.THROAT_CHECKING_INTERVAL }` );
+			}
 			this.throatCheckingInterval = process.env.THROAT_CHECKING_INTERVAL;
 		}
 	}

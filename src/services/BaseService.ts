@@ -1,14 +1,25 @@
 import { DatabaseConnection } from "../connections/DatabaseConnection";
 import { connection, Model, Types } from "mongoose";
 import { PageUtil, TestUtil, TypeUtil } from "denetwork-utils";
-import { PostModel } from "../entities/PostEntity";
+import { PostModel, PostType } from "../entities/PostEntity";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { ERefDataTypes } from "../models/ERefDataTypes";
 import { CommentModel } from "../entities/CommentEntity";
+import { isAddress } from "ethers";
+import { Web3Digester } from "web3id";
+import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
+import { LikeModel, LikeType } from "../entities/LikeEntity";
+import { resultErrors } from "../constants/ResultErrors";
+import _ from "lodash";
 
 
 export abstract class BaseService extends DatabaseConnection
 {
+	/**
+	 * 	@type {number}
+	 */
+	throatCheckingInterval : number = 3 * 1000;
+
 	protected constructor()
 	{
 		super();
@@ -159,12 +170,38 @@ export abstract class BaseService extends DatabaseConnection
 				{
 					return reject( `invalid value` );
 				}
+				if ( 1 !== value && -1 !== value )
+				{
+					return reject( `invalid value, must be 1 or -1` );
+				}
 
 				await this.connect();
 				const find : T | null = await this.queryOneById<T>( model, id );
 				if ( find )
 				{
-					const update : Record<string, any> = { $inc: { [ key ] : value } };
+					const anyFind : any = find as any;
+
+					//	throat checking
+					if ( ! TestUtil.isTestEnv() )
+					{
+						const latestElapsedMillisecond : number = await this.queryLatestElapsedMillisecondByUpdatedAt<T>( model, anyFind.wallet );
+						if ( latestElapsedMillisecond > 0 && latestElapsedMillisecond < this.throatCheckingInterval )
+						{
+							return reject( resultErrors.operateFrequently );
+						}
+					}
+
+					//	...
+					let orgValue : number = 0;
+					if ( _.has( anyFind, key ) )
+					{
+						if ( _.isNumber( anyFind[ key ] ) )
+						{
+							orgValue = anyFind[ key ];
+						}
+					}
+					const newValue : number = orgValue + ( value > 0 ? 1 : -1 );
+					const update : Record<string, any> = { [ key ] : newValue >= 0 ? newValue : 0 };
 					const updated : T | null = await model.findOneAndUpdate( find, update, { new : true } ).lean<T>();
 					return resolve( updated );
 				}
@@ -294,6 +331,125 @@ export abstract class BaseService extends DatabaseConnection
 	public get walletLikedKey() : string
 	{
 		return `_walletLiked`;
+	}
+
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param postHash		{string}
+	 *	@returns {Promise<boolean>}
+	 */
+	public walletFavoritedPost( wallet : string, postHash : string ) : Promise<boolean>
+	{
+		return this.walletFavorited( wallet, ERefDataTypes.post, postHash );
+	}
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param commentHash	{string}
+	 *	@returns {Promise<boolean>}
+	 */
+	public walletFavoritedComment( wallet : string, commentHash : string ) : Promise<boolean>
+	{
+		return this.walletFavorited( wallet, ERefDataTypes.comment, commentHash );
+	}
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param refType		{ERefDataTypes}
+	 *	@param refHash		{string}
+	 *	@returns {Promise<boolean>}
+	 */
+	public walletFavorited( wallet : string, refType : ERefDataTypes, refHash : string ) : Promise<boolean>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! isAddress( wallet ) )
+				{
+					return reject( `invalid wallet` );
+				}
+				if ( ! Object.values( ERefDataTypes ).includes( refType ) )
+				{
+					return reject( `invalid refType` );
+				}
+				if ( ! Web3Digester.isValidHash( refHash ) )
+				{
+					return reject( `invalid refHash` );
+				}
+
+				const favRecord = await FavoriteModel
+					.findOne()
+					.byWalletAndRefTypeAndRefHash( wallet, refType, refHash )
+					.lean<FavoriteType>()
+					.exec();
+				resolve( ( !! favRecord ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		});
+	}
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param postHash		{string}
+	 *	@returns {Promise<boolean>}
+	 */
+	public walletLikedPost( wallet : string, postHash : string ) : Promise<boolean>
+	{
+		return this.walletLiked( wallet, ERefDataTypes.post, postHash );
+	}
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param commentHash	{string}
+	 *	@returns {Promise<boolean>}
+	 */
+	public walletLikedComment( wallet : string, commentHash : string ) : Promise<boolean>
+	{
+		return this.walletLiked( wallet, ERefDataTypes.comment, commentHash );
+	}
+
+	/**
+	 *	@param wallet		{string}
+	 *	@param refType		{ERefDataTypes}
+	 *	@param refHash		{string}
+	 *	@returns {Promise<boolean>}
+	 */
+	public walletLiked( wallet : string, refType : ERefDataTypes, refHash : string ) : Promise<boolean>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! isAddress( wallet ) )
+				{
+					return reject( `invalid wallet` );
+				}
+				if ( ! Object.values( ERefDataTypes ).includes( refType ) )
+				{
+					return reject( `invalid refType` );
+				}
+				if ( ! Web3Digester.isValidHash( refHash ) )
+				{
+					return reject( `invalid refHash` );
+				}
+
+				const likeRecord = await LikeModel
+					.findOne()
+					.byWalletAndRefTypeAndRefHash( wallet, refType, refHash )
+					.lean<LikeType>()
+					.exec();
+				resolve( ( !! likeRecord ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		});
 	}
 
 	/**

@@ -1,7 +1,7 @@
 import { describe, expect } from '@jest/globals';
 import { EtherWallet, Web3Signer, TWalletBaseItem, Web3Digester } from "web3id";
 import { ethers } from "ethers";
-import { DatabaseConnection, ERefDataTypes, FavoriteService, FavoriteType } from "../../../src";
+import { DatabaseConnection, ERefDataTypes, FavoriteService, FavoriteType, LikeService, LikeType } from "../../../src";
 import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { PostListResult, postSchema, PostType } from "../../../src";
@@ -74,7 +74,7 @@ describe( "CommentService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -129,7 +129,7 @@ describe( "CommentService", () =>
 			//     }
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 
 			//
@@ -150,7 +150,7 @@ describe( "CommentService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -178,7 +178,7 @@ describe( "CommentService", () =>
 			expect( savedComment[ commentService.walletFavoritedKey ] ).toBe( undefined );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -327,6 +327,151 @@ describe( "CommentService", () =>
 			}
 
 		}, 60 * 10e3 );
+
+		it( "should return a record with false by key `_walletFavorited` after cancelling fav", async () =>
+		{
+			const favoriteService = new FavoriteService();
+			await favoriteService.clearAll();
+
+			//
+			//	favorite this comment
+			//
+			let favorite : FavoriteType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				refType : ERefDataTypes.comment,
+				refHash : savedComment.hash,
+				refBody : 'will favorite this comment',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			favorite.sig = await Web3Signer.signObject( walletObj.privateKey, favorite );
+			favorite.hash = await Web3Digester.hashObject( favorite );
+			expect( favorite.sig ).toBeDefined();
+			expect( typeof favorite.sig ).toBe( 'string' );
+			expect( favorite.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//
+			//	try to save the record to database
+			//
+			const favoriteRecord = await favoriteService.add( walletObj.address, favorite, favorite.sig );
+			expect( favoriteRecord ).toBeDefined();
+
+			//
+			//	check the value of field `_walletFavorited` in comment
+			//
+			const commentService = new CommentService();
+			const result : CommentType | null = await commentService.queryOne( walletObj.address, { by : `hash`, hash : savedComment.hash } );
+			expect( result ).toBeDefined();
+			expect( result ).toHaveProperty( commentService.walletFavoritedKey );
+			expect( result[ commentService.walletFavoritedKey ] ).toBeTruthy();
+
+			//
+			//	try to cancel the fav
+			//
+			let favoriteToBeDeleted : FavoriteType = {
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 1 ),
+				wallet : walletObj.address,
+				hash : favorite.hash
+			};
+			favoriteToBeDeleted.sig = await Web3Signer.signObject( walletObj.privateKey, favoriteToBeDeleted );
+			expect( favoriteToBeDeleted.sig ).toBeDefined();
+			expect( typeof favoriteToBeDeleted.sig ).toBe( 'string' );
+			expect( favoriteToBeDeleted.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//	...
+			const deleteResult : number = await favoriteService.delete( walletObj.address, favoriteToBeDeleted, favoriteToBeDeleted.sig );
+			expect( deleteResult ).toBeGreaterThanOrEqual( 0 );
+
+			const findFavoriteAgain : FavoriteType | null = await favoriteService.queryOne( walletObj.address, { by : 'hash', hash : favorite.hash } );
+			expect( findFavoriteAgain ).toBe( null );
+
+			//
+			//	check the value of field `_walletFavorited` in comment
+			//
+			const commentOneResult : CommentType | null = await commentService.queryOne( walletObj.address, { by : `hash`, hash : savedComment.hash } );
+			expect( commentOneResult ).toBeDefined();
+			expect( commentOneResult ).toHaveProperty( commentService.walletFavoritedKey );
+			expect( commentOneResult[ commentService.walletFavoritedKey ] ).toBeFalsy();
+
+		}, 60 * 10e3 );
+
+		it( "should return a record with false by key `_walletFavorited` after unliking", async () =>
+		{
+			const commentService = new CommentService();
+			const likeService = new LikeService();
+			await likeService.clearAll();
+
+			//
+			//	create a new like with ether signature
+			//
+			let like : LikeType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				refType : ERefDataTypes.comment,
+				refHash : savedComment.hash,
+				refBody : '',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			like.sig = await Web3Signer.signObject( walletObj.privateKey, like );
+			like.hash = await Web3Digester.hashObject( like );
+			expect( like.sig ).toBeDefined();
+			expect( typeof like.sig ).toBe( 'string' );
+			expect( like.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//	add favorite and update statistic
+			const likeRecord = await likeService.add( walletObj.address, like, like.sig );
+			expect( likeRecord ).toBeDefined();
+
+			//
+			//	check the value of field `_walletFavorited` in comment
+			//
+			const commentResult : CommentType | null = await commentService.queryOne( walletObj.address, { by : `hash`, hash : savedComment.hash } );
+			expect( commentResult ).toBeDefined();
+			expect( commentResult ).toHaveProperty( commentService.walletLikedKey );
+			expect( commentResult[ commentService.walletLikedKey ] ).toBeTruthy();
+
+
+			//
+			//	try to cancel the like
+			//
+			let likeToBeDeleted : LikeType = {
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 1 ),
+				wallet : walletObj.address,
+				hash : like.hash
+			};
+			likeToBeDeleted.sig = await Web3Signer.signObject( walletObj.privateKey, likeToBeDeleted );
+			expect( likeToBeDeleted.sig ).toBeDefined();
+			expect( typeof likeToBeDeleted.sig ).toBe( 'string' );
+			expect( likeToBeDeleted.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//	...
+			const deleteLikeResult : number = await likeService.delete( walletObj.address, likeToBeDeleted, likeToBeDeleted.sig );
+			expect( deleteLikeResult ).toBeGreaterThanOrEqual( 0 );
+
+			const findLikeAgain : LikeType | null = await likeService.queryOne( walletObj.address, { by : 'hash', hash : like.hash } );
+			expect( findLikeAgain ).toBe( null );
+
+			//
+			//	check the value of field `_walletFavorited` in comment
+			//
+			const commentOneResult : CommentType | null = await commentService.queryOne( walletObj.address, { by : `hash`, hash : savedComment.hash } );
+			expect( commentOneResult ).toBeDefined();
+			expect( commentOneResult ).toHaveProperty( commentService.walletLikedKey );
+			expect( commentOneResult[ commentService.walletLikedKey ] ).toBeFalsy();
+
+		}, 60 * 10e3 );
 	} );
 
 	describe( "Query list", () =>
@@ -338,9 +483,9 @@ describe( "CommentService", () =>
 			expect( SchemaUtil.isValidKeccak256Hash( savedPost.hash ) ).toBeTruthy();
 
 			const commentService = new CommentService();
-			const results : PostListResult = await commentService.queryList( '', { by : 'postHash', postHash : savedPost.hash } );
-			expect( results ).toHaveProperty( 'total' );
-			expect( results ).toHaveProperty( 'list' );
+			const listResult : PostListResult = await commentService.queryList( '', { by : 'postHash', postHash : savedPost.hash } );
+			expect( listResult ).toHaveProperty( 'total' );
+			expect( listResult ).toHaveProperty( 'list' );
 			//
 			//    console.log( results );
 			//    {
@@ -382,7 +527,7 @@ describe( "CommentService", () =>
 			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
 			if ( requiredKeys )
 			{
-				for ( const record of results.list )
+				for ( const record of listResult.list )
 				{
 					for ( const key of requiredKeys )
 					{
@@ -395,6 +540,13 @@ describe( "CommentService", () =>
 					//
 					expect( record ).not.toHaveProperty( commentService.walletFavoritedKey );
 					expect( record[ commentService.walletFavoritedKey ] ).toBe( undefined );
+
+					//
+					//	check statisticView
+					//
+					expect( record ).toHaveProperty( `statisticView` );
+					expect( _.isNumber( record.statisticView ) ).toBeTruthy();
+					expect( record.statisticView ).toBeGreaterThan( 0 );
 				}
 			}
 
@@ -550,7 +702,7 @@ describe( "CommentService", () =>
 					body : `Hello 1 ${ NoStr }`,
 					pictures : [],
 					videos : [],
-					bitcoinPrice : '25888',
+					bitcoinPrice : 26888,
 					statisticView : 0,
 					statisticRepost : 0,
 					statisticQuote : 0,
@@ -647,7 +799,7 @@ describe( "CommentService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -677,7 +829,7 @@ describe( "CommentService", () =>
 				body : `Hello, this is the body of parent comment`,
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -719,7 +871,7 @@ describe( "CommentService", () =>
 					body : `Hello 1 ${ NoStr }`,
 					pictures : [],
 					videos : [],
-					bitcoinPrice : '25888',
+					bitcoinPrice : 26888,
 					statisticView : 0,
 					statisticRepost : 0,
 					statisticQuote : 0,
@@ -915,7 +1067,7 @@ describe( "CommentService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -943,7 +1095,7 @@ describe( "CommentService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -966,7 +1118,7 @@ describe( "CommentService", () =>
 			expect( savedNewComment ).toHaveProperty( '_id' );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 			//
 			//	....
@@ -1039,7 +1191,7 @@ describe( "CommentService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 
@@ -1063,7 +1215,7 @@ describe( "CommentService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -1086,7 +1238,7 @@ describe( "CommentService", () =>
 			expect( savedNewComment ).toHaveProperty( '_id' );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 			//
 			//	try to increase statistic
@@ -1095,19 +1247,23 @@ describe( "CommentService", () =>
 			expect( increasePost ).toBeDefined();
 			expect( increasePost.statisticView ).toBe( 1 );
 
+			//
+			//	the value of .statisticView will be increased after calling .queryOne
+			//
 			const findComment : CommentType | null = await commentService.queryOne( walletObj.address, { by : 'walletAndHash', hash : comment.hash } );
 			expect( findComment ).toBeDefined();
-			expect( findComment.statisticView ).toBe( 1 );
+			expect( findComment.statisticView ).toBe( 2 );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
+			//	the value of .statisticView will be changed to 1 from 2
 			const decreasedComment : CommentType | null = await commentService.updateFor( walletObj.address, { hash : comment.hash, key : `statisticView`, value : -1 } );
 			expect( decreasedComment ).toBeDefined();
-			expect( decreasedComment.statisticView ).toBe( 0 );
+			expect( decreasedComment.statisticView ).toBe( 1 );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -1136,7 +1292,7 @@ describe( "CommentService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -1159,10 +1315,11 @@ describe( "CommentService", () =>
 			expect( savedNewComment ).toHaveProperty( '_id' );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 			//	...
 			const findComment : CommentType | null = await commentService.queryOne( walletObj.address, { by : `walletAndHash`, hash : savedNewComment.hash } );
+			expect( findComment ).toBeDefined();
 			if ( findComment )
 			{
 				let toBeDeleted : CommentType = { ...findComment,
@@ -1185,4 +1342,88 @@ describe( "CommentService", () =>
 
 		}, 60 * 10e3 );
 	} );
+
+
+	describe( "Test statisticView", () =>
+	{
+		//
+		//	create a wallet by mnemonic
+		//
+		const mnemonic : string = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
+		const walletObj : TWalletBaseItem = EtherWallet.createWalletFromMnemonic( mnemonic );
+
+		it( "should increase the value of statisticView after calling queryOne/queryList", async () =>
+		{
+			const commentService = new CommentService();
+			await commentService.clearAll();
+
+			//
+			//	create a new comment with signature
+			//
+			let comment : CommentType = {
+				postHash : savedPost.hash,
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				sig : ``,
+				authorName : 'XING',
+				authorAvatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				replyTo : 'HaSeme',
+				postSnippet : `post name abc`,
+				body : 'Hello 1',
+				pictures : [],
+				videos : [],
+				bitcoinPrice : 26888,
+				statisticView : 0,
+				statisticRepost : 0,
+				statisticQuote : 0,
+				statisticLike : 0,
+				statisticFavorite : 0,
+				statisticReply : 0,
+				remark : 'no ...',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			comment.sig = await Web3Signer.signObject( walletObj.privateKey, comment, exceptedKeys );
+			comment.hash = await Web3Digester.hashObject( comment, exceptedKeys );
+
+			//	try to save the record to database
+			const savedNewComment = await commentService.add( walletObj.address, comment, comment.sig );
+			expect( savedNewComment ).toBeDefined();
+			expect( savedNewComment ).toHaveProperty( '_id' );
+
+
+			//
+			//	the value of statisticView will be increased after calling queryOne
+			//
+			const findComment : CommentType | null = await commentService.queryOne( walletObj.address, { by : `hash`, hash : savedNewComment.hash } );
+			expect( findComment ).toBeDefined();
+			expect( findComment ).toHaveProperty( `statisticView` );
+			expect( _.isNumber( findComment.statisticView ) ).toBeTruthy();
+			expect( findComment.statisticView ).toBe( 1 );
+
+
+			//
+			//	the value of statisticView of items in the list will be increased after calling queryList
+			//
+			const options : TQueryListOptions = {
+				pageNo : 1,
+				pageSize : 10
+			};
+			const listResult : PostListResult = await commentService.queryList( '', { by : 'postHash', postHash : savedPost.hash, options : options } );
+			expect( listResult ).toBeDefined();
+			expect( listResult ).toHaveProperty( `list` );
+			expect( Array.isArray( listResult.list ) ).toBeTruthy();
+			expect( listResult.list.length ).toBeGreaterThan( 0 );
+			for ( const commentItem of listResult.list )
+			{
+				expect( commentItem ).toBeDefined();
+				expect( commentItem ).toHaveProperty( `statisticView` );
+				expect( _.isNumber( commentItem.statisticView ) ).toBeTruthy();
+				expect( commentItem.statisticView ).toBe( 2 );
+			}
+		} );
+	});
 } );

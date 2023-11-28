@@ -1,13 +1,22 @@
 import { describe, expect } from '@jest/globals';
 import { EtherWallet, Web3Signer, TWalletBaseItem, Web3Digester } from "web3id";
 import { ethers } from "ethers";
-import { DatabaseConnection, ERefDataTypes, FavoriteService, FavoriteType, LikeService, LikeType } from "../../../src";
+import {
+	CommentType,
+	DatabaseConnection,
+	ERefDataTypes,
+	FavoriteService,
+	FavoriteType,
+	LikeService,
+	LikeType
+} from "../../../src";
 import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { PostListResult, postSchema, PostType } from "../../../src";
 import { PostService } from "../../../src";
 import { TQueryListOptions } from "../../../src/models/TQuery";
 import { resultErrors } from "../../../src";
+import _ from "lodash";
 
 
 
@@ -65,7 +74,7 @@ describe( "PostService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -117,7 +126,7 @@ describe( "PostService", () =>
 			expect( savedPost ).toHaveProperty( '_id' );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -342,6 +351,142 @@ describe( "PostService", () =>
 		});
 	});
 
+	describe( "Query one with favorite and like interactions", () =>
+	{
+		const mnemonic : string = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
+		const walletObj : TWalletBaseItem = EtherWallet.createWalletFromMnemonic( mnemonic );
+
+		it( "should return a record with key `_walletFavorited` and `_walletLiked`", async () =>
+		{
+			const postService = new PostService();
+
+			const favoriteService = new FavoriteService();
+			await favoriteService.clearAll();
+
+			const likeService = new LikeService();
+			await likeService.clearAll();
+
+			//
+			//	favorite this comment
+			//
+			let favorite : FavoriteType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				refType : ERefDataTypes.post,
+				refHash : savedPost.hash,
+				refBody : 'will favorite this post',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			favorite.sig = await Web3Signer.signObject( walletObj.privateKey, favorite );
+			favorite.hash = await Web3Digester.hashObject( favorite );
+			expect( favorite.sig ).toBeDefined();
+			expect( typeof favorite.sig ).toBe( 'string' );
+			expect( favorite.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//
+			//	try to save the record to database
+			//
+			const favoritedRecord = await favoriteService.add( walletObj.address, favorite, favorite.sig );
+			expect( favoritedRecord ).toBeDefined();
+
+			//
+			//	like this post
+			//
+			let like : LikeType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				refType : ERefDataTypes.post,
+				refHash : savedPost.hash,
+				refBody : 'will like this post',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			like.sig = await Web3Signer.signObject( walletObj.privateKey, like );
+			like.hash = await Web3Digester.hashObject( like );
+			expect( like.sig ).toBeDefined();
+			expect( typeof like.sig ).toBe( 'string' );
+			expect( like.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			const lickedRecord = await likeService.add( walletObj.address, like, like.sig );
+			expect( lickedRecord ).toBeDefined();
+
+			//
+			//	query the post
+			//
+			const postResult1 : PostType | null = await postService.queryOne( walletObj.address, { by : 'hash', hash : savedPost.hash } );
+			expect( postResult1 ).toBeDefined();
+			expect( postResult1 ).toHaveProperty( postService.walletFavoritedKey );
+			expect( postResult1[ postService.walletFavoritedKey ] ).toBeTruthy();
+			expect( postResult1 ).toHaveProperty( postService.walletLikedKey );
+			expect( postResult1[ postService.walletLikedKey ] ).toBeTruthy();
+
+
+			//
+			//	try to cancel the fav
+			//
+			let favoriteToBeDeleted : FavoriteType = {
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 1 ),
+				wallet : walletObj.address,
+				hash : favorite.hash
+			};
+			favoriteToBeDeleted.sig = await Web3Signer.signObject( walletObj.privateKey, favoriteToBeDeleted );
+			expect( favoriteToBeDeleted.sig ).toBeDefined();
+			expect( typeof favoriteToBeDeleted.sig ).toBe( 'string' );
+			expect( favoriteToBeDeleted.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//	...
+			const deleteResult : number = await favoriteService.delete( walletObj.address, favoriteToBeDeleted, favoriteToBeDeleted.sig );
+			expect( deleteResult ).toBeGreaterThanOrEqual( 0 );
+
+			const findFavoriteAgain : FavoriteType | null = await favoriteService.queryOne( walletObj.address, { by : 'hash', hash : favorite.hash } );
+			expect( findFavoriteAgain ).toBe( null );
+
+
+			//
+			//	try to cancel the like
+			//
+			let likeToBeDeleted : LikeType = {
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 1 ),
+				wallet : walletObj.address,
+				hash : like.hash
+			};
+			likeToBeDeleted.sig = await Web3Signer.signObject( walletObj.privateKey, likeToBeDeleted );
+			expect( likeToBeDeleted.sig ).toBeDefined();
+			expect( typeof likeToBeDeleted.sig ).toBe( 'string' );
+			expect( likeToBeDeleted.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//	...
+			const deleteLikeResult : number = await likeService.delete( walletObj.address, likeToBeDeleted, likeToBeDeleted.sig );
+			expect( deleteLikeResult ).toBeGreaterThanOrEqual( 0 );
+
+			const findLikeAgain : LikeType | null = await likeService.queryOne( walletObj.address, { by : 'hash', hash : like.hash } );
+			expect( findLikeAgain ).toBe( null );
+
+
+			//
+			//	check the value of field `_walletFavorited` in post
+			//	check the value of field `_walletLiked` in post
+			//
+			const postResult2 : PostType | null = await postService.queryOne( walletObj.address, { by : 'hash', hash : savedPost.hash } );
+			expect( postResult2 ).toBeDefined();
+			expect( postResult2 ).toHaveProperty( postService.walletFavoritedKey );
+			expect( postResult2[ postService.walletFavoritedKey ] ).toBeFalsy();
+			expect( postResult2 ).toHaveProperty( postService.walletLikedKey );
+			expect( postResult2[ postService.walletLikedKey ] ).toBeFalsy();
+		});
+	});
+
 
 	describe( "Query list", () =>
 	{
@@ -441,7 +586,7 @@ describe( "PostService", () =>
 					body : `Hello 1 ${ NoStr }`,
 					pictures : [],
 					videos : [],
-					bitcoinPrice : '25888',
+					bitcoinPrice : 26888,
 					statisticView : 0,
 					statisticRepost : 0,
 					statisticQuote : 0,
@@ -530,7 +675,7 @@ describe( "PostService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(3 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -561,7 +706,7 @@ describe( "PostService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -584,7 +729,7 @@ describe( "PostService", () =>
 			expect( savedPost ).toHaveProperty( '_id' );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(3 * 1000 );
 
 			//
 			//	....
@@ -658,7 +803,7 @@ describe( "PostService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(3 * 1000 );
 
 		}, 60 * 10e3 );
 
@@ -686,7 +831,7 @@ describe( "PostService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -709,28 +854,27 @@ describe( "PostService", () =>
 			expect( savedPost ).toHaveProperty( '_id' );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(3 * 1000 );
 
 			//
-			//	try to increase statistic
+			//	will increase statisticView after calling .queryOne
 			//
-			const increasePost : PostType | null = await postService.updateFor( walletObj.address, { hash : post.hash, key : `statisticView`, value: 1 } );
-			expect( increasePost ).toBeDefined();
-			expect( increasePost.statisticView ).toBe( 1 );
-
+			// const increasePost : PostType | null = await postService.updateFor( walletObj.address, { hash : post.hash, key : `statisticView`, value: 1 } );
+			// expect( increasePost ).toBeDefined();
+			// expect( increasePost.statisticView ).toBe( 1 );
 			const findPost : PostType | null = await postService.queryOne( walletObj.address, { by : 'walletAndHash', hash : post.hash } );
 			expect( findPost ).toBeDefined();
 			expect( findPost.statisticView ).toBe( 1 );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(3 * 1000 );
 
 			const decreasePost : PostType | null = await postService.updateFor( walletObj.address, { hash : post.hash, key : `statisticView`, value : -1 } );
 			expect( decreasePost ).toBeDefined();
 			expect( decreasePost.statisticView ).toBe( 0 );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(3 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -761,7 +905,7 @@ describe( "PostService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -784,10 +928,11 @@ describe( "PostService", () =>
 			expect( savedPost ).toHaveProperty( '_id' );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(3 * 1000 );
 
 			//	...
 			const findPost : PostType | null = await postService.queryOne( walletObj.address, { by : 'walletAndHash', hash : post.hash } );
+			expect( findPost ).toBeDefined();
 			if ( findPost )
 			{
 				let toBeDeleted : PostType = { ...findPost,
@@ -807,5 +952,142 @@ describe( "PostService", () =>
 			}
 
 		}, 60 * 10e3 );
+	} );
+
+	describe( "Test statisticView", () =>
+	{
+		//
+		//	create a wallet by mnemonic
+		//
+		const mnemonic : string = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
+		const walletObj : TWalletBaseItem = EtherWallet.createWalletFromMnemonic( mnemonic );
+
+		it( "should increase the value of statisticView after calling queryOne", async () =>
+		{
+			//	assert ...
+			expect( walletObj ).not.toBeNull();
+			expect( walletObj.mnemonic ).toBe( mnemonic );
+			expect( walletObj.privateKey.startsWith( '0x' ) ).toBe( true );
+			expect( walletObj.address.startsWith( '0x' ) ).toBe( true );
+			expect( walletObj.index ).toBe( 0 );
+			expect( walletObj.path ).toBe( ethers.defaultPath );
+
+			//
+			//	try to save the record to database
+			//
+			const postService = new PostService();
+			await postService.clearAll();
+
+			//
+			//	create a new contact with ether signature
+			//
+			let post : PostType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				sig : ``,
+				authorName : 'XING',
+				authorAvatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				body : 'Hello 1',
+				pictures : [],
+				videos : [],
+				bitcoinPrice : 26888,
+				statisticView : 0,
+				statisticRepost : 0,
+				statisticQuote : 0,
+				statisticLike : 0,
+				statisticFavorite : 0,
+				statisticReply : 0,
+				remark : 'no ...',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			post.sig = await Web3Signer.signObject( walletObj.privateKey, post, exceptedKeys );
+			post.hash = await Web3Digester.hashObject( post, exceptedKeys );
+			expect( post.sig ).toBeDefined();
+			expect( typeof post.sig ).toBe( 'string' );
+			expect( post.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			savedPost = await postService.add( walletObj.address, post, post.sig );
+			expect( savedPost ).toBeDefined();
+			expect( savedPost ).toHaveProperty( '_id' );
+
+
+			const findPost : PostType | null = await postService.queryOne( walletObj.address, { by : 'hash', hash : post.hash } );
+			expect( findPost ).toBeDefined();
+			expect( findPost ).toHaveProperty( `statisticView` );
+			expect( _.isNumber( findPost.statisticView ) ).toBeTruthy();
+			expect( findPost.statisticView ).toBe( 1 );
+
+			//	wait for a while
+			//await TestUtil.sleep(3 * 1000 );
+
+		}, 60 * 10e3 );
+
+		it( 'should increase the value of statisticShare', async () =>
+		{
+			//	assert ...
+			expect( walletObj ).not.toBeNull();
+			expect( walletObj.mnemonic ).toBe( mnemonic );
+			expect( walletObj.privateKey.startsWith( '0x' ) ).toBe( true );
+			expect( walletObj.address.startsWith( '0x' ) ).toBe( true );
+			expect( walletObj.index ).toBe( 0 );
+			expect( walletObj.path ).toBe( ethers.defaultPath );
+
+			//
+			//	try to save the record to database
+			//
+			const postService = new PostService();
+			await postService.clearAll();
+
+			//
+			//	create a new contact with ether signature
+			//
+			let post : PostType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				sig : ``,
+				authorName : 'XING',
+				authorAvatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				body : 'Hello 1',
+				pictures : [],
+				videos : [],
+				bitcoinPrice : 26888,
+				statisticView : 0,
+				statisticRepost : 0,
+				statisticQuote : 0,
+				statisticLike : 0,
+				statisticFavorite : 0,
+				statisticReply : 0,
+				remark : 'no ...',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			post.sig = await Web3Signer.signObject( walletObj.privateKey, post, exceptedKeys );
+			post.hash = await Web3Digester.hashObject( post, exceptedKeys );
+			expect( post.sig ).toBeDefined();
+			expect( typeof post.sig ).toBe( 'string' );
+			expect( post.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			savedPost = await postService.add( walletObj.address, post, post.sig );
+			expect( savedPost ).toBeDefined();
+			expect( savedPost ).toHaveProperty( '_id' );
+
+			//
+			//	will increase the value of field .statisticShare
+			//
+			const increasePost1 : PostType | null = await postService.updateFor( walletObj.address, { hash : post.hash, key : `statisticShare`, value : 1 } );
+			expect( increasePost1 ).toBeDefined();
+			expect( increasePost1.statisticShare ).toBe( 1 );
+
+			const increasePost2 : PostType | null = await postService.updateFor( walletObj.address, { hash : post.hash, key : `statisticShare`, value : 1 } );
+			expect( increasePost2 ).toBeDefined();
+			expect( increasePost2.statisticShare ).toBe( 2 );
+		} );
 	} );
 } );

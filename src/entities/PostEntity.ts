@@ -102,11 +102,6 @@ export const postSchema = new Schema( {
 		},
 		required : false
 	},
-	bitcoinPrice : {
-		//	Bitcoin price, just a string
-		type : String,
-		required : false
-	},
 
 	//	refAuthorWallet, refAuthorName, refAuthorAvatar, refType, refHash
 	...MRefEntity,

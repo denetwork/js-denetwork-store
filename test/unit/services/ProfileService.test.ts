@@ -124,7 +124,7 @@ describe( "ProfileService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -241,7 +241,7 @@ describe( "ProfileService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 
@@ -285,7 +285,7 @@ describe( "ProfileService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -480,7 +480,7 @@ describe( "ProfileService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );

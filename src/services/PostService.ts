@@ -239,79 +239,15 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				}
 				if ( statisticKeys.includes( data.key ) )
 				{
-					const result : CommentType | null = await this._updateStatistics( wallet, data.hash, data.key, data.value );
-					return resolve( result );
-				}
-
-				//	...
-				resolve( null );
-			}
-			catch ( err )
-			{
-				reject( err );
-			}
-		} );
-	}
-
-	/**
-	 *	@param wallet	{string}
-	 *	@param hash	{string}
-	 *	@param key	{string} statisticView, statisticRepost, statisticQuote, ...
-	 *	@param value	{number} 1 or -1
-	 *	@returns {Promise< PostType | null >}
-	 */
-	private _updateStatistics( wallet : string, hash : string, key : string, value : 1 | -1 ) : Promise<PostType | null>
-	{
-		return new Promise( async ( resolve, reject ) =>
-		{
-			try
-			{
-				if ( ! EtherWallet.isValidAddress( wallet ) )
-				{
-					return reject( `invalid wallet` );
-				}
-				if ( ! SchemaUtil.isValidKeccak256Hash( hash ) )
-				{
-					return reject( `invalid hash` );
-				}
-
-				const statisticKeys : Array<string> | null = SchemaUtil.getPrefixedKeys( postSchema, 'statistic' );
-				if ( ! Array.isArray( statisticKeys ) || 0 === statisticKeys.length )
-				{
-					return reject( `failed to calculate statistic prefixed keys` );
-				}
-				if ( ! statisticKeys.includes( key ) )
-				{
-					return reject( `invalid key` );
-				}
-
-				//	throat checking
-				if ( ! TestUtil.isTestEnv() )
-				{
-					const latestElapsedMillisecond : number = await this.queryLatestElapsedMillisecondByUpdatedAt<PostType>( PostModel, wallet );
-					if ( latestElapsedMillisecond > 0 && latestElapsedMillisecond < 3 * 1000 )
+					const find : PostType | null = await this._queryOneByHash( wallet, data.hash );
+					if ( find )
 					{
-						return reject( resultErrors.operateFrequently );
+						const result : PostType | null = await this.updateStatistics<PostType>( PostModel, find._id, data.key, data.value );
+						return resolve( result );
 					}
 				}
 
-				await this.connect();
-				const find : PostType | null = await PostModel
-					.findOne()
-					.byHash( hash )
-					.lean<PostType>()
-					.exec();
-				if ( find )
-				{
-					const orgValue : number = _.has( find, key ) ? find[ key ] : 0;
-					const newValue : number = orgValue + ( 1 === value ? 1 : -1 );
-					const update : Record<string, any> = { [ key ] : newValue >= 0 ? newValue : 0 };
-					const savedPost : PostType | null = await PostModel.findOneAndUpdate( find, update, { new : true } ).lean<PostType>();
-
-					//	...
-					return resolve( savedPost );
-				}
-
+				//	...
 				resolve( null );
 			}
 			catch ( err )
@@ -404,15 +340,31 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 					return reject( `invalid data, missing key : by` );
 				}
 
+				let post : PostType | null = null;
 				switch ( data.by )
 				{
 					case 'hash' :
-						return resolve( await this._queryOneByHash( wallet, data.hash ) );
+						post = await this._queryOneByHash( wallet, data.hash );
+						break;
 					case 'walletAndHash' :
-						return resolve( await this._queryOneByWalletAndHash( wallet, data.hash ) );
+						post = await this._queryOneByWalletAndHash( wallet, data.hash );
+						break;
 				}
 
-				resolve( null );
+				//
+				//	update `statisticView`
+				//
+				if ( post )
+				{
+					const updatedPost : PostType | null = await this.updateStatistics<PostType>( PostModel, post._id, `statisticView`, 1 );
+					if ( updatedPost )
+					{
+						post.statisticView = updatedPost.statisticView;
+					}
+				}
+
+				//	...
+				resolve( post );
 			}
 			catch ( err )
 			{
@@ -688,75 +640,6 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			}
 		} );
 	}
-
-	/**
-	 *	@param wallet		{string}
-	 *	@param postHash		{string}
-	 *	@returns {Promise<boolean>}
-	 */
-	public walletFavoritedPost( wallet : string, postHash : string ) : Promise<boolean>
-	{
-		return new Promise( async ( resolve, reject ) =>
-		{
-			try
-			{
-				if ( ! isAddress( wallet ) )
-				{
-					return reject( `invalid wallet` );
-				}
-				if ( ! Web3Digester.isValidHash( postHash ) )
-				{
-					return reject( `invalid postHash` );
-				}
-
-				const favRecord = await FavoriteModel
-					.findOne()
-					.byWalletAndRefTypeAndRefHash( wallet, ERefDataTypes.post, postHash )
-					.lean<FavoriteType>()
-					.exec();
-				resolve( ( !! favRecord ) );
-			}
-			catch ( err )
-			{
-				reject( err );
-			}
-		});
-	}
-
-	/**
-	 *	@param wallet		{string}
-	 *	@param postHash		{string}
-	 *	@returns {Promise<boolean>}
-	 */
-	public walletLikedPost( wallet : string, postHash : string ) : Promise<boolean>
-	{
-		return new Promise( async ( resolve, reject ) =>
-		{
-			try
-			{
-				if ( ! isAddress( wallet ) )
-				{
-					return reject( `invalid wallet` );
-				}
-				if ( ! Web3Digester.isValidHash( postHash ) )
-				{
-					return reject( `invalid postHash` );
-				}
-
-				const likeRecord = await LikeModel
-					.findOne()
-					.byWalletAndRefTypeAndRefHash( wallet, ERefDataTypes.post, postHash )
-					.lean<LikeType>()
-					.exec();
-				resolve( ( !! likeRecord ) );
-			}
-			catch ( err )
-			{
-				reject( err );
-			}
-		});
-	}
-
 
 	/**
 	 * 	@returns {Promise<void>}

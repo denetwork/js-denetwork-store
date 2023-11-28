@@ -78,7 +78,7 @@ describe( "ContactService", () =>
 			const contactService = new ContactService();
 
 			//	wait for a while
-			await TestUtil.sleep(100 );
+			//await TestUtil.sleep(100 );
 
 			//	...
 			const result = await contactService.add( walletObj.address, contact, contact.sig );
@@ -95,7 +95,7 @@ describe( "ContactService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(100 );
+			//await TestUtil.sleep(100 );
 
 			try
 			{
@@ -127,7 +127,7 @@ describe( "ContactService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -315,7 +315,7 @@ describe( "ContactService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -382,7 +382,7 @@ describe( "ContactService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 
@@ -434,7 +434,7 @@ describe( "ContactService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 
@@ -476,7 +476,7 @@ describe( "ContactService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );

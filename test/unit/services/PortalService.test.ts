@@ -115,7 +115,7 @@ describe( "PortalService", () =>
 					body : `Hello 1 ${ NoStr }`,
 					pictures : [],
 					videos : [],
-					bitcoinPrice : '25888',
+					bitcoinPrice : 26888,
 					statisticView : 0,
 					statisticRepost : 0,
 					statisticQuote : 0,
@@ -215,16 +215,16 @@ describe( "PortalService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(3 * 1000 );
+			//await TestUtil.sleep(3 * 1000 );
 
 		}, 60 * 10e3 );
 
 
 		it( "should return recommended posts for each person", async () =>
 		{
-			for ( let i = 0; i < 3; i ++ )
+			for ( let i = 0; i < testUserList.length; i ++ )
 			{
-				//	Alice
+				//	Alice, Bob, Mary
 				walletObj = EtherWallet.createWalletFromMnemonic( testUserList[ i ].mnemonic );
 				expect( walletObj ).not.toBeNull();
 				expect( EtherWallet.isValidPrivateKey( walletObj.privateKey ) ).toBeTruthy();
@@ -234,7 +234,7 @@ describe( "PortalService", () =>
 				const portalService = new PortalService();
 				const pageOptions : TQueryListOptions = {
 					pageNo : 1,
-					pageSize : 30,
+					pageSize : 100,
 					sort : { createdAt : 'desc' }
 				};
 				//const results : PostListResult = await portalService.queryRecommendedPostList( walletObj.address, { options : pageOptions }, undefined );
@@ -442,7 +442,7 @@ describe( "PortalService", () =>
 					body : `Hello 1 ${ NoStr }`,
 					pictures : [],
 					videos : [],
-					bitcoinPrice : '25888',
+					bitcoinPrice : 26888,
 					statisticView : 0,
 					statisticRepost : 0,
 					statisticQuote : 0,
@@ -469,7 +469,7 @@ describe( "PortalService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(3 * 1000 );
+			//await TestUtil.sleep(3 * 1000 );
 
 		}, 60 * 10e3 );
 

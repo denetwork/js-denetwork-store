@@ -77,7 +77,7 @@ describe( "FollowerService", () =>
 			await followerService.clearAll();
 
 			//	wait for a while
-			await TestUtil.sleep(1000 );
+			//await TestUtil.sleep(1000 );
 
 			//	...
 			const result = await followerService.add( walletObj.address, follower, follower.sig );
@@ -124,7 +124,7 @@ describe( "FollowerService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -315,7 +315,7 @@ describe( "FollowerService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -358,7 +358,7 @@ describe( "FollowerService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );

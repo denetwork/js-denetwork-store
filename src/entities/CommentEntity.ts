@@ -157,11 +157,6 @@ export const commentSchema = new Schema( {
 		},
 		required: false
 	},
-	bitcoinPrice : {
-		//	Bitcoin price, just a string
-		type : String,
-		required : false
-	},
 	...MStatisticEntity,
 	...MRemarkEntity
 }, {

@@ -10,7 +10,8 @@ export const MStatisticEntity : any = {
 			validator : ( v: any ) => TypeUtil.isNumeric( v ) && v >= 0,
 			message: ( props: any ) : string => `invalid ${props.path}, should be greater than or equal to 0`
 		},
-		required: [ true, '{PATH} required' ]
+		//required: [ true, '{PATH} required' ]
+		required: false
 	},
 	statisticRepost : {
 		type : Number,
@@ -18,7 +19,7 @@ export const MStatisticEntity : any = {
 			validator : ( v: any ) => TypeUtil.isNumeric( v ) && v >= 0,
 			message: ( props: any ) : string => `invalid ${props.path}, should be greater than or equal to 0`
 		},
-		required: [ true, '{PATH} required' ]
+		required: false
 	},
 	statisticQuote : {
 		type : Number,
@@ -26,7 +27,7 @@ export const MStatisticEntity : any = {
 			validator : ( v: any ) => TypeUtil.isNumeric( v ) && v >= 0,
 			message: ( props: any ) : string => `invalid ${props.path}, should be greater than or equal to 0`
 		},
-		required: [ true, '{PATH} required' ]
+		required: false
 	},
 	statisticLike : {
 		type : Number,
@@ -34,7 +35,7 @@ export const MStatisticEntity : any = {
 			validator : ( v: any ) => TypeUtil.isNumeric( v ) && v >= 0,
 			message: ( props: any ) : string => `invalid ${props.path}, should be greater than or equal to 0`
 		},
-		required: [ true, '{PATH} required' ]
+		required: false
 	},
 	statisticFavorite : {
 		type : Number,
@@ -42,7 +43,7 @@ export const MStatisticEntity : any = {
 			validator : ( v: any ) => TypeUtil.isNumeric( v ) && v >= 0,
 			message: ( props: any ) : string => `invalid ${props.path}, should be greater than or equal to 0`
 		},
-		required: [ true, '{PATH} required' ]
+		required: false
 	},
 	statisticReply : {
 		type : Number,
@@ -50,6 +51,14 @@ export const MStatisticEntity : any = {
 			validator : ( v: any ) => TypeUtil.isNumeric( v ) && v >= 0,
 			message: ( props: any ) : string => `invalid ${props.path}, should be greater than or equal to 0`
 		},
-		required: [ true, '{PATH} required' ]
+		required: false
+	},
+	statisticShare : {
+		type : Number,
+		validate: {
+			validator : ( v: any ) => TypeUtil.isNumeric( v ) && v >= 0,
+			message: ( props: any ) : string => `invalid ${props.path}, should be greater than or equal to 0`
+		},
+		required: false
 	},
 };

@@ -7,7 +7,7 @@ import { TQueryListOptions } from "../models/TQuery";
 import { CommentListResult, CommentModel, commentSchema, CommentType } from "../entities/CommentEntity";
 import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
-import { postSchema } from "../entities/PostEntity";
+import { PostModel, postSchema, PostType } from "../entities/PostEntity";
 import { resultErrors } from "../constants/ResultErrors";
 import _ from "lodash";
 import { isAddress } from "ethers";
@@ -332,15 +332,30 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 					return reject( `invalid data, missing key : by` );
 				}
 
+				let comment : CommentType | null = null;
 				switch ( data.by )
 				{
 					case 'walletAndHash' :
-						return resolve( await this._queryOneByWalletAndHash( wallet, data.hash ) );
+						comment = await this._queryOneByWalletAndHash( wallet, data.hash );
+						break;
 					case 'hash' :
-						return resolve( await this._queryOneByHash( wallet, data.hash ) );
+						comment = await this._queryOneByHash( wallet, data.hash );
+						break;
 				}
 
-				resolve( null );
+				//
+				//	update `statisticView`
+				//
+				if ( comment )
+				{
+					const updatedComment : CommentType | null = await this.updateStatistics<CommentType>( CommentModel, comment._id, `statisticView`, 1 );
+					if ( updatedComment )
+					{
+						comment.statisticView = updatedComment.statisticView;
+					}
+				}
+
+				resolve( comment );
 			}
 			catch ( err )
 			{
@@ -366,17 +381,42 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 					return reject( `invalid data, missing key : by` );
 				}
 
+				let listResult : CommentListResult | null = null;
 				switch ( data.by )
 				{
 					case 'walletAndPostHash' :
 						//	retrieve all my comments in a post
-						return resolve( await this._queryListByWalletAndPostHash( wallet, data.postHash, data.options ) );
+						listResult = await this._queryListByWalletAndPostHash( wallet, data.postHash, data.options );
+						break;
 					case 'postHash' :
 						//	retrieve all comments in a post
-						return resolve( await this._queryListByPostHash( wallet, data.postHash, data.options ) );
+						listResult = await this._queryListByPostHash( wallet, data.postHash, data.options );
+						break;
 					case 'postHashAndParentHash' :
 						//	retrieve all replies(children comments) to a comment in a post
-						return resolve( await this._queryListByPostHashAndParentHash( wallet, data.postHash, data.parentHash, data.options ) );
+						listResult = await this._queryListByPostHashAndParentHash( wallet, data.postHash, data.parentHash, data.options );
+						break;
+				}
+
+				//
+				//	update `statisticView`
+				//
+				if ( listResult )
+				{
+					if ( Array.isArray( listResult.list ) && listResult.list.length > 0 )
+					{
+						for ( let i = 0; i < listResult.list.length; i ++ )
+						{
+							const comment : CommentType = listResult.list[ i ];
+							const updatedComment : CommentType | null = await this.updateStatistics<CommentType>( CommentModel, comment._id, `statisticView`, 1 );
+							if ( updatedComment )
+							{
+								listResult.list[ i ].statisticView = updatedComment.statisticView;
+							}
+						}
+					}
+
+					return resolve( listResult );
 				}
 
 				//	...
@@ -421,6 +461,9 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 					record[ this.walletFavoritedKey ] =
 						Web3Digester.isValidHash( record.hash ) &&
 						await this.walletFavoritedComment( wallet, record.hash );
+					record[ this.walletLikedKey ] =
+						Web3Digester.isValidHash( record.hash ) &&
+						await this.walletLikedComment( wallet, record.hash );
 
 					//	...
 					return resolve( record );
@@ -464,6 +507,9 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 						record[ this.walletFavoritedKey ] =
 							Web3Digester.isValidHash( record.hash ) &&
 							await this.walletFavoritedComment( wallet, record.hash );
+						record[ this.walletLikedKey ] =
+							Web3Digester.isValidHash( record.hash ) &&
+							await this.walletLikedComment( wallet, record.hash );
 					}
 
 					//	...
@@ -531,6 +577,9 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 						comments[ i ][ this.walletFavoritedKey ] =
 							Web3Digester.isValidHash( comments[ i ].hash ) &&
 							await this.walletFavoritedComment( wallet, comments[ i ].hash );
+						comments[ i ][ this.walletLikedKey ] =
+							Web3Digester.isValidHash( comments[ i ].hash ) &&
+							await this.walletLikedComment( wallet, comments[ i ].hash );
 					}
 
 					//	...
@@ -597,6 +646,9 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 							comments[ i ][ this.walletFavoritedKey ] =
 								Web3Digester.isValidHash( comments[ i ].hash ) &&
 								await this.walletFavoritedComment( wallet, comments[ i ].hash );
+							comments[ i ][ this.walletLikedKey ] =
+								Web3Digester.isValidHash( comments[ i ].hash ) &&
+								await this.walletLikedComment( wallet, comments[ i ].hash );
 						}
 					}
 
@@ -669,6 +721,9 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 							comments[ i ][ this.walletFavoritedKey ] =
 								Web3Digester.isValidHash( comments[ i ].hash ) &&
 								await this.walletFavoritedComment( wallet, comments[ i ].hash );
+							comments[ i ][ this.walletLikedKey ] =
+								Web3Digester.isValidHash( comments[ i ].hash ) &&
+								await this.walletLikedComment( wallet, comments[ i ].hash );
 						}
 					}
 
@@ -678,40 +733,6 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 
 				//	...
 				resolve( result );
-			}
-			catch ( err )
-			{
-				reject( err );
-			}
-		} );
-	}
-
-	/**
-	 *	@param wallet		{string}
-	 *	@param commentHash	{string}
-	 *	@returns {Promise<boolean>}
-	 */
-	public walletFavoritedComment( wallet : string, commentHash : string ) : Promise<boolean>
-	{
-		return new Promise( async ( resolve, reject ) =>
-		{
-			try
-			{
-				if ( ! isAddress( wallet ) )
-				{
-					return reject( `invalid wallet` );
-				}
-				if ( ! Web3Digester.isValidHash( commentHash ) )
-				{
-					return reject( `invalid commentHash` );
-				}
-
-				const favRecord = await FavoriteModel
-					.findOne()
-					.byWalletAndRefTypeAndRefHash( wallet, ERefDataTypes.comment, commentHash )
-					.lean<FavoriteType>()
-					.exec();
-				resolve( ( !! favRecord ) );
 			}
 			catch ( err )
 			{

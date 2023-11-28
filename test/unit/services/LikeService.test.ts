@@ -57,7 +57,7 @@ describe( "LikeService", () =>
 			body : 'Hello 1',
 			pictures : [],
 			videos : [],
-			bitcoinPrice : '25888',
+			bitcoinPrice : 26888,
 			statisticView : 0,
 			statisticRepost : 0,
 			statisticQuote : 0,
@@ -184,7 +184,7 @@ describe( "LikeService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -324,7 +324,7 @@ describe( "LikeService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -348,7 +348,7 @@ describe( "LikeService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -436,7 +436,7 @@ describe( "LikeService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -524,7 +524,7 @@ describe( "LikeService", () =>
 				body : 'Hello 1',
 				pictures : [],
 				videos : [],
-				bitcoinPrice : '25888',
+				bitcoinPrice : 26888,
 				statisticView : 0,
 				statisticRepost : 0,
 				statisticQuote : 0,
@@ -687,7 +687,7 @@ describe( "LikeService", () =>
 					body : 'Hello 1',
 					pictures : [],
 					videos : [],
-					bitcoinPrice : '25888',
+					bitcoinPrice : 26888,
 					statisticView : 0,
 					statisticRepost : 0,
 					statisticQuote : 0,
@@ -792,7 +792,7 @@ describe( "LikeService", () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			//await TestUtil.sleep(5 * 1000 );
 
 		}, 60 * 10e3 );
 	} );

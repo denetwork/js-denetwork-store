@@ -17,12 +17,18 @@ export abstract class BaseService extends DatabaseConnection
 {
 	/**
 	 * 	@type {number}
+	 * 	@description	in milliseconds
 	 */
 	throatCheckingInterval : number = 3 * 1000;
 
 	protected constructor()
 	{
 		super();
+		if ( _.isNumber( process.env.THROAT_CHECKING_INTERVAL ) && process.env.THROAT_CHECKING_INTERVAL >= 0 )
+		{
+			console.log( `))) will set throatCheckingInterval to ${ process.env.THROAT_CHECKING_INTERVAL }` );
+			this.throatCheckingInterval = process.env.THROAT_CHECKING_INTERVAL;
+		}
 	}
 
 	/**
@@ -182,7 +188,7 @@ export abstract class BaseService extends DatabaseConnection
 					const anyFind : any = find as any;
 
 					//	throat checking
-					if ( ! TestUtil.isTestEnv() )
+					if ( ! TestUtil.isTestEnv() && this.throatCheckingInterval > 0 )
 					{
 						const latestElapsedMillisecond : number = await this.queryLatestElapsedMillisecondByUpdatedAt<T>( model, anyFind.wallet );
 						if ( latestElapsedMillisecond > 0 && latestElapsedMillisecond < this.throatCheckingInterval )

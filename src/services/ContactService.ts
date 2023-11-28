@@ -113,10 +113,10 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 				}
 
 				//	throat checking
-				if ( ! TestUtil.isTestEnv() )
+				if ( ! TestUtil.isTestEnv() && this.throatCheckingInterval > 0 )
 				{
 					const latestElapsedMillisecond : number = await this.queryLatestElapsedMillisecondByUpdatedAt<ContactType>( ContactModel, wallet );
-					if ( latestElapsedMillisecond > 0 && latestElapsedMillisecond < 3 * 1000 )
+					if ( latestElapsedMillisecond > 0 && latestElapsedMillisecond < this.throatCheckingInterval )
 					{
 						return reject( resultErrors.operateFrequently );
 					}
@@ -200,10 +200,10 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 				}
 
 				//	throat checking
-				if ( ! TestUtil.isTestEnv() )
+				if ( ! TestUtil.isTestEnv() && this.throatCheckingInterval > 0 )
 				{
 					const latestElapsedMillisecond : number = await this.queryLatestElapsedMillisecondByUpdatedAt<ContactType>( ContactModel, wallet );
-					if ( latestElapsedMillisecond > 0 && latestElapsedMillisecond < 3 * 1000 )
+					if ( latestElapsedMillisecond > 0 && latestElapsedMillisecond < this.throatCheckingInterval )
 					{
 						return reject( resultErrors.operateFrequently );
 					}

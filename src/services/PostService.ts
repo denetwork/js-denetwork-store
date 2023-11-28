@@ -286,10 +286,10 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				}
 
 				//	throat checking
-				if ( ! TestUtil.isTestEnv() )
+				if ( ! TestUtil.isTestEnv() && this.throatCheckingInterval > 0 )
 				{
 					const latestElapsedMillisecond : number = await this.queryLatestElapsedMillisecondByUpdatedAt<PostType>( PostModel, wallet );
-					if ( latestElapsedMillisecond > 0 && latestElapsedMillisecond < 3 * 1000 )
+					if ( latestElapsedMillisecond > 0 && latestElapsedMillisecond < this.throatCheckingInterval )
 					{
 						return reject( resultErrors.operateFrequently );
 					}

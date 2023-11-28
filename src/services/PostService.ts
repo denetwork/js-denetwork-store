@@ -10,10 +10,6 @@ import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
 import { CommentModel, commentSchema, CommentType } from "../entities/CommentEntity";
 import { isAddress } from "ethers";
-import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
-import { ERefDataTypes } from "../models/ERefDataTypes";
-import _ from "lodash";
-import { LikeModel, LikeType } from "../entities/LikeEntity";
 
 /**
  * 	class PostService

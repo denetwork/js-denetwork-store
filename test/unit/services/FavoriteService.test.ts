@@ -14,7 +14,6 @@ import {
 } from "../../../src";
 import { EtherWallet, TWalletBaseItem, Web3Digester, Web3Signer } from "web3id";
 import { ethers } from "ethers";
-import { TestUtil } from "denetwork-utils";
 import { TQueryListOptions } from "../../../src/models/TQuery";
 
 

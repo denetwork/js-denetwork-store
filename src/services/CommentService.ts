@@ -7,12 +7,10 @@ import { TQueryListOptions } from "../models/TQuery";
 import { CommentListResult, CommentModel, commentSchema, CommentType } from "../entities/CommentEntity";
 import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
-import { PostModel, postSchema, PostType } from "../entities/PostEntity";
+import { postSchema } from "../entities/PostEntity";
 import { resultErrors } from "../constants/ResultErrors";
 import _ from "lodash";
 import { isAddress } from "ethers";
-import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
-import { ERefDataTypes } from "../models/ERefDataTypes";
 
 /**
  * 	class CommentService

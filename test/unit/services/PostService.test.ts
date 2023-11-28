@@ -2,7 +2,6 @@ import { describe, expect } from '@jest/globals';
 import { EtherWallet, Web3Signer, TWalletBaseItem, Web3Digester } from "web3id";
 import { ethers } from "ethers";
 import {
-	CommentType,
 	DatabaseConnection,
 	ERefDataTypes,
 	FavoriteService,
@@ -10,7 +9,6 @@ import {
 	LikeService,
 	LikeType
 } from "../../../src";
-import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { PostListResult, postSchema, PostType } from "../../../src";
 import { PostService } from "../../../src";

@@ -8,7 +8,6 @@ import {
 import { EtherWallet, TWalletBaseItem, Web3Digester, Web3Signer } from "web3id";
 import { ethers } from "ethers";
 import { DatabaseConnection } from "../../../src";
-import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { LikeService } from "../../../src";
 import { TQueryListOptions } from "../../../src/models/TQuery";

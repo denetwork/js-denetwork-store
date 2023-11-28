@@ -4,7 +4,6 @@ import { EtherWallet, Web3Signer, TWalletBaseItem, Web3Digester } from "web3id";
 import { ethers } from "ethers";
 import { DatabaseConnection } from "../../../src";
 import { TQueryListOptions } from "../../../src/models/TQuery";
-import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { FollowerService } from "../../../src";
 import { resultErrors } from "../../../src";

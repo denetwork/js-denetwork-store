@@ -5,7 +5,6 @@ import { ethers } from "ethers";
 import { ContactService } from "../../../src";
 import { DatabaseConnection } from "../../../src";
 import { TQueryListOptions } from "../../../src/models/TQuery";
-import { TestUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { resultErrors } from "../../../src";
 

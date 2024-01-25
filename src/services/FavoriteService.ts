@@ -11,6 +11,7 @@ import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
 import { CommentListResult, CommentModel, CommentType } from "../entities/CommentEntity";
 import { PostModel, PostType } from "../entities/PostEntity";
+import { ContactModel } from "../entities/ContactEntity";
 
 /**
  * 	@class FavoriteService
@@ -484,6 +485,10 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 				};
 
 				await this.connect();
+				const total : number = await FavoriteModel
+					.find()
+					.byWalletAndRefType( wallet, refType )
+					.countDocuments();
 				const list : Array<FavoriteType> = await FavoriteModel
 					.find()
 					.byWalletAndRefType( wallet, refType )
@@ -495,7 +500,8 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 				if ( Array.isArray( list ) )
 				{
 					result.list = list;
-					result.total = list.length;
+					//result.total = list.length;
+					result.total = total;
 				}
 
 				//	...

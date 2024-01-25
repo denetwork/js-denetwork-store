@@ -8,6 +8,7 @@ import { TQueryListOptions } from "../models/TQuery";
 import { QueryUtil } from "../utils/QueryUtil";
 import { PostType } from "../entities/PostEntity";
 import { resultErrors } from "../constants/ResultErrors";
+import { CommentModel } from "../entities/CommentEntity";
 
 /**
  * 	class ContactsService
@@ -417,6 +418,10 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 				};
 
 				await this.connect();
+				const total : number = await ContactModel
+					.find()
+					.byWalletAndAddress( wallet, address )
+					.countDocuments();
 				const contacts : Array<ContactType> = await ContactModel
 					.find()
 					.byWalletAndAddress( wallet, address )
@@ -428,7 +433,8 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 				if ( Array.isArray( contacts ) )
 				{
 					result.list = contacts;
-					result.total = contacts.length;
+					//result.total = contacts.length;
+					result.total = total;
 				}
 
 				//	...

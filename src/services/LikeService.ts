@@ -9,7 +9,7 @@ import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
 import { ERefDataTypes } from "../models/ERefDataTypes";
-import { FavoriteType } from "../entities/FavoriteEntity";
+import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
 import { PostModel, PostType } from "../entities/PostEntity";
 import { CommentModel, CommentType } from "../entities/CommentEntity";
 
@@ -471,7 +471,11 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 				};
 
 				await this.connect();
-				const contacts : Array<LikeType> = await LikeModel
+				const total : number = await LikeModel
+					.find()
+					.byWalletAndRefType( wallet, refType )
+					.countDocuments();
+				const likes : Array<LikeType> = await LikeModel
 					.find()
 					.byWalletAndRefType( wallet, refType )
 					.sort( sortBy )
@@ -479,10 +483,11 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 					.limit( pageSize )
 					.lean<Array<LikeType>>()
 					.exec();
-				if ( Array.isArray( contacts ) )
+				if ( Array.isArray( likes ) )
 				{
-					result.list = contacts;
-					result.total = contacts.length;
+					result.list = likes;
+					//result.total = contacts.length;
+					result.total = total;
 				}
 
 				//	...

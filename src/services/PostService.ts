@@ -10,6 +10,7 @@ import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
 import { CommentModel, commentSchema, CommentType } from "../entities/CommentEntity";
 import { isAddress } from "ethers";
+import { LikeModel } from "../entities/LikeEntity";
 
 /**
  * 	class PostService
@@ -532,6 +533,10 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				};
 
 				await this.connect();
+				const total : number = await PostModel
+					.find()
+					.byWallet( wallet )
+					.countDocuments();
 				const posts : Array<PostType> = await PostModel
 					.find()
 					.byWallet( wallet )
@@ -554,7 +559,8 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 
 					//	...
 					result.list = posts;
-					result.total = posts.length;
+					//result.total = posts.length;
+					result.total = total;
 				}
 
 				//	...
@@ -599,6 +605,10 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				};
 
 				await this.connect();
+				const total : number = await PostModel
+					.find()
+					.byRefAuthorWallet( refAuthorWallet )
+					.countDocuments();
 				const posts : Array<PostType> = await PostModel
 					.find()
 					.byRefAuthorWallet( refAuthorWallet )
@@ -624,7 +634,8 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 
 					//	...
 					result.list = posts;
-					result.total = posts.length;
+					//result.total = posts.length;
+					result.total = total;
 				}
 
 				//	...

@@ -760,7 +760,8 @@ describe( "FavoriteService", () =>
 			const favoriteService = new FavoriteService();
 			await favoriteService.clearAll();
 
-			for ( let i = 0; i < 100; i ++ )
+			const limitTotal = 100;
+			for ( let i = 0; i < limitTotal; i ++ )
 			{
 				const NoStr : string = Number(i).toString().padStart( 2, '0' );
 
@@ -849,6 +850,7 @@ describe( "FavoriteService", () =>
 				expect( results ).toHaveProperty( 'list' );
 				expect( results.pageNo ).toBe( options.pageNo );
 				expect( results.pageSize ).toBe( options.pageSize );
+				expect( results.total ).toBe( limitTotal );
 				//
 				//    console.log( results );
 				//    {

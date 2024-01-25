@@ -7,6 +7,7 @@ import { Document, Error, SortOrder, Types } from "mongoose";
 import { TQueryListOptions } from "../models/TQuery";
 import { QueryUtil } from "../utils/QueryUtil";
 import { resultErrors } from "../constants/ResultErrors";
+import { PostModel } from "../entities/PostEntity";
 
 /**
  * 	@class ProfileService
@@ -367,6 +368,10 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 				};
 
 				await this.connect();
+				const total : number = await ProfileModel
+					.find()
+					.byWallet( wallet )
+					.countDocuments();
 				const contacts : Array<ProfileType> = await ProfileModel
 					.find()
 					.byWallet( wallet )
@@ -378,7 +383,8 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 				if ( Array.isArray( contacts ) )
 				{
 					result.list = contacts;
-					result.total = contacts.length;
+					//result.total = contacts.length;
+					result.total = total;
 				}
 
 				//	...

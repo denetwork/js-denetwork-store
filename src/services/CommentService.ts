@@ -11,6 +11,7 @@ import { postSchema } from "../entities/PostEntity";
 import { resultErrors } from "../constants/ResultErrors";
 import _ from "lodash";
 import { isAddress } from "ethers";
+import { FollowerModel } from "../entities/FollowerEntity";
 
 /**
  * 	class CommentService
@@ -560,6 +561,10 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				};
 
 				await this.connect();
+				const total : number = await CommentModel
+					.find( { parentHash : { $exists : false } } )
+					.byWalletAndPostHash( wallet, postHash )
+					.countDocuments();
 				const comments : Array<CommentType> = await CommentModel
 					.find( { parentHash : { $exists : false } } )
 					.byWalletAndPostHash( wallet, postHash )
@@ -582,7 +587,8 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 
 					//	...
 					result.list = comments;
-					result.total = comments.length;
+					//result.total = comments.length;
+					result.total = total;
 				}
 
 				//	...
@@ -627,6 +633,10 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				};
 
 				await this.connect();
+				const total : number = await CommentModel
+					.find( { parentHash : { $exists : false } } )
+					.byPostHash( postHash )
+					.countDocuments();
 				const comments : Array<CommentType> = await CommentModel
 					.find( { parentHash : { $exists : false } } )
 					.byPostHash( postHash )
@@ -652,7 +662,8 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 
 					//	...
 					result.list = comments;
-					result.total = comments.length;
+					//result.total = comments.length;
+					result.total = total;
 				}
 
 				//	...
@@ -702,6 +713,10 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				};
 
 				await this.connect();
+				const total : number = await CommentModel
+					.find()
+					.byPostHashAndParentHash( postHash, parentHash )
+					.countDocuments();
 				const comments : Array<CommentType> = await CommentModel
 					.find()
 					.byPostHashAndParentHash( postHash, parentHash )
@@ -726,7 +741,8 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 					}
 
 					result.list = comments;
-					result.total = comments.length;
+					//result.total = comments.length;
+					result.total = total;
 				}
 
 				//	...

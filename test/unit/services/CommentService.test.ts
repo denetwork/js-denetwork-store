@@ -683,7 +683,9 @@ describe( "CommentService", () =>
 			//
 			const commentService = new CommentService();
 			await commentService.clearAll();
-			for ( let i = 0; i < 100; i ++ )
+
+			const limitTotal = 100;
+			for ( let i = 0; i < limitTotal; i ++ )
 			{
 				const NoStr : string = Number(i).toString().padStart( 2, '0' );
 				let comment : CommentType = {
@@ -731,13 +733,17 @@ describe( "CommentService", () =>
 					pageNo : page,
 					pageSize : 10
 				};
-				const results : PostListResult = await commentService.queryList( '', { by : 'postHash', postHash : savedPost.hash, options : options } );
+				const results : PostListResult = await commentService.queryList(
+					'',
+					{ by : 'postHash', postHash : savedPost.hash, options : options }
+				);
 				expect( results ).toHaveProperty( 'total' );
 				expect( results ).toHaveProperty( 'pageNo' );
 				expect( results ).toHaveProperty( 'pageSize' );
 				expect( results ).toHaveProperty( 'list' );
 				expect( results.pageNo ).toBe( options.pageNo );
 				expect( results.pageSize ).toBe( options.pageSize );
+				expect( results.total ).toBe( limitTotal );
 				//
 				//    console.log( results );
 				//    {
@@ -851,7 +857,8 @@ describe( "CommentService", () =>
 			//
 			//	create children comments
 			//
-			for ( let i = 0; i < 100; i ++ )
+			const limitTotal = 100;
+			for ( let i = 0; i < limitTotal; i ++ )
 			{
 				const NoStr : string = Number(i).toString().padStart( 2, '0' );
 				let comment : CommentType = {
@@ -901,7 +908,7 @@ describe( "CommentService", () =>
 			expect( checkParentComment.statisticChildrenCount ).toBe( 100 );
 
 			//
-			//	Query the normal list by pagination
+			//	Query the list by pagination
 			//
 			for ( let page = 1; page <= 10; page ++ )
 			{
@@ -910,8 +917,9 @@ describe( "CommentService", () =>
 					pageSize : 10
 				};
 				const results : PostListResult = await commentService.queryList( '',
-					{ by : 'postHash',
+					{ by : 'postHashAndParentHash',
 						postHash : savedPost.hash,
+						parentHash : parentComment.hash,
 						options : options }
 				);
 				expect( results ).toHaveProperty( 'total' );
@@ -920,6 +928,7 @@ describe( "CommentService", () =>
 				expect( results ).toHaveProperty( 'list' );
 				expect( results.pageNo ).toBe( options.pageNo );
 				expect( results.pageSize ).toBe( options.pageSize );
+				expect( results.total ).toBe( limitTotal );
 				//
 				//    console.log( results );
 				//    {
@@ -969,8 +978,8 @@ describe( "CommentService", () =>
 							expect( record ).toHaveProperty( key );
 						}
 
-						expect( record ).not.toHaveProperty( `parentHash` );
-						expect( record.parentHash ).toBe( undefined );
+						expect( record ).toHaveProperty( `parentHash` );
+						expect( record.parentHash ).toBe( parentComment.hash );
 
 						//
 						//	the wallet field is empty when submitting the query,
@@ -1334,7 +1343,7 @@ describe( "CommentService", () =>
 				expect( result ).toBeGreaterThanOrEqual( 0 );
 
 				const findCommentAgain : PostType | null = await commentService.queryOne( walletObj.address, { by : 'walletAndHash', hash : savedNewComment.hash } );
-				console.log( `findCommentAgain :`, findCommentAgain );
+				//console.log( `findCommentAgain :`, findCommentAgain );
 				expect( findCommentAgain ).toBe( null );
 			}
 

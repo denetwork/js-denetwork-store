@@ -181,7 +181,7 @@ describe( "FollowerService", () =>
 			expect( results ).toHaveProperty( 'total' );
 			expect( results ).toHaveProperty( 'list' );
 			//
-			//    console.log( results );
+			//   console.log( results );
 			//    {
 			//       total: 1,
 			//       list: [
@@ -229,8 +229,9 @@ describe( "FollowerService", () =>
 			const followerService = new FollowerService();
 			await followerService.clearAll();
 
+			const limitTotal = 100;
 			let walletObjNew : TWalletBaseItem = walletObj;
-			for ( let i = 0; i < 100; i ++ )
+			for ( let i = 0; i < limitTotal; i ++ )
 			{
 				const NoStr : string = Number(i).toString().padStart( 2, '0' );
 
@@ -275,6 +276,7 @@ describe( "FollowerService", () =>
 				expect( results ).toHaveProperty( 'list' );
 				expect( results.pageNo ).toBe( options.pageNo );
 				expect( results.pageSize ).toBe( options.pageSize );
+				expect( results.total ).toBe( limitTotal );
 				//
 				//    console.log( results );
 				//    {

@@ -664,7 +664,8 @@ describe( "LikeService", () =>
 			const likeService = new LikeService();
 			await likeService.clearAll();
 
-			for ( let i = 0; i < 100; i ++ )
+			const limitTotal = 100;
+			for ( let i = 0; i < limitTotal; i ++ )
 			{
 				const NoStr : string = Number(i).toString().padStart( 2, '0' );
 
@@ -752,6 +753,7 @@ describe( "LikeService", () =>
 				expect( results ).toHaveProperty( 'list' );
 				expect( results.pageNo ).toBe( options.pageNo );
 				expect( results.pageSize ).toBe( options.pageSize );
+				expect( results.total ).toBe( limitTotal );
 				//
 				//    console.log( results );
 				//    {

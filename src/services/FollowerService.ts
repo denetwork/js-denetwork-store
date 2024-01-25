@@ -389,6 +389,10 @@ export class FollowerService extends BaseService implements IWeb3StoreService<Fo
 				};
 
 				await this.connect();
+				const total = await FollowerModel
+					.find()
+					.byWalletAndAddress( wallet, address )
+					.countDocuments();
 				const contacts : Array<FollowerType> = await FollowerModel
 					.find()
 					.byWalletAndAddress( wallet, address )
@@ -400,7 +404,8 @@ export class FollowerService extends BaseService implements IWeb3StoreService<Fo
 				if ( Array.isArray( contacts ) )
 				{
 					result.list = contacts;
-					result.total = contacts.length;
+					//result.total = contacts.length;
+					result.total = total;
 				}
 
 				//	...
@@ -444,6 +449,10 @@ export class FollowerService extends BaseService implements IWeb3StoreService<Fo
 				};
 
 				await this.connect();
+				const total = await FollowerModel
+					.find()
+					.byAddress( address )
+					.countDocuments();
 				const contacts : Array<FollowerType> = await FollowerModel
 					.find()
 					.byAddress( address )
@@ -455,7 +464,8 @@ export class FollowerService extends BaseService implements IWeb3StoreService<Fo
 				if ( Array.isArray( contacts ) )
 				{
 					result.list = contacts;
-					result.total = contacts.length;
+					// result.total = contacts.length;
+					result.total = total;
 				}
 
 				//	...

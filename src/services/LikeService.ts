@@ -9,7 +9,6 @@ import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
 import { ERefDataTypes } from "../models/ERefDataTypes";
-import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
 import { PostModel, PostType } from "../entities/PostEntity";
 import { CommentModel, CommentType } from "../entities/CommentEntity";
 
@@ -89,10 +88,10 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 
 				//	...
 				await this.connect();
-				const savedDoc : Document<FavoriteType> = await likeModel.save();
+				const savedDoc : Document<LikeType> = await likeModel.save();
 				if ( savedDoc )
 				{
-					//	statisticFavorite +1
+					//	statisticLike +1
 					if ( 'post' === data.refType )
 					{
 						await this.updateStatistics<PostType>( PostModel, origin._id, `statisticLike`, 1 );
@@ -326,10 +325,10 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 
 	/**
 	 *	@param hexId	{string}
-	 *	@returns { Promise<FavoriteType | null> }
+	 *	@returns { Promise<LikeType | null> }
 	 *	@private
 	 */
-	private _queryOneByHexId( hexId : string ) : Promise<FavoriteType | null>
+	private _queryOneByHexId( hexId : string ) : Promise<LikeType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -344,7 +343,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 				const record = await LikeModel
 					.findOne()
 					.byHexId( hexId )
-					.lean<FavoriteType>()
+					.lean<LikeType>()
 					.exec();
 				if ( record )
 				{
@@ -362,10 +361,10 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 
 	/**
 	 *	@param hash	{string}
-	 *	@returns { Promise<FavoriteType | null> }
+	 *	@returns { Promise<LikeType | null> }
 	 *	@private
 	 */
-	private _queryOneByHash( hash : string ) : Promise<FavoriteType | null>
+	private _queryOneByHash( hash : string ) : Promise<LikeType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -380,7 +379,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 				const record = await LikeModel
 					.findOne()
 					.byHash( hash )
-					.lean<FavoriteType>()
+					.lean<LikeType>()
 					.exec();
 				if ( record )
 				{

@@ -333,7 +333,7 @@ describe( "LikeService", () =>
 		it( "should logically delete a record by hexId", async () =>
 		{
 			//
-			//	create a new contact with ether signature
+			//	create a post with signature
 			//
 			let post : PostType = {
 				timestamp : new Date().getTime(),
@@ -402,7 +402,7 @@ describe( "LikeService", () =>
 			let likeToBeDeleted : LikeType = {
 				deleted : SchemaUtil.createHexStringObjectIdFromTime( 1 ),
 				wallet : walletObj.address,
-				hexId : savedPost._id.toHexString(),
+				hexId : savedLike._id.toHexString(),
 			};
 			likeToBeDeleted.sig = await Web3Signer.signObject( walletObj.privateKey, likeToBeDeleted );
 			expect( likeToBeDeleted.sig ).toBeDefined();
@@ -413,8 +413,39 @@ describe( "LikeService", () =>
 			const result : number = await likeService.delete( walletObj.address, likeToBeDeleted, likeToBeDeleted.sig );
 			expect( result ).toBeGreaterThanOrEqual( 0 );
 
-			const findFavoriteAgain : LikeType | null = await likeService.queryOne( walletObj.address, { by : 'walletAndRefTypeAndRefHash', refType : ERefDataTypes.post, refHash : oneLikeHash } );
+			const findFavoriteAgain : LikeType | null = await likeService.queryOne( walletObj.address, { by : 'walletAndRefTypeAndRefHash', refType : ERefDataTypes.post, refHash : savedPost.hash } );
 			expect( findFavoriteAgain ).toBe( null );
+
+			//
+			//	like again after being deleted
+			//
+			let likeAgain : LikeType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				refType : ERefDataTypes.post,
+				refHash : savedPost.hash,
+				refBody : '',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			likeAgain.sig = await Web3Signer.signObject( walletObj.privateKey, likeAgain );
+			likeAgain.hash = await Web3Digester.hashObject( likeAgain );
+			expect( likeAgain.sig ).toBeDefined();
+			expect( typeof likeAgain.sig ).toBe( 'string' );
+			expect( likeAgain.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			console.log( `savedLike :`, savedLike );
+			console.log( `likeToBeDeleted :`, likeToBeDeleted );
+			console.log( `findFavoriteAgain :`, findFavoriteAgain );
+			console.log( `likeAgain :`, likeAgain );
+
+			const savedLikeAgain = await likeService.add( walletObj.address, likeAgain, likeAgain.sig );
+			expect( savedLikeAgain ).toBeDefined();
 
 		}, 60 * 10e3 );
 

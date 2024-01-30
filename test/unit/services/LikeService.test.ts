@@ -402,7 +402,8 @@ describe( "LikeService", () =>
 			let likeToBeDeleted : LikeType = {
 				deleted : SchemaUtil.createHexStringObjectIdFromTime( 1 ),
 				wallet : walletObj.address,
-				hexId : savedLike._id.toHexString(),
+				//hexId : savedLike._id.toHexString(),
+				hash : savedLike.hash,
 			};
 			likeToBeDeleted.sig = await Web3Signer.signObject( walletObj.privateKey, likeToBeDeleted );
 			expect( likeToBeDeleted.sig ).toBeDefined();

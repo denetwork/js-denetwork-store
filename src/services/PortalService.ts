@@ -12,6 +12,7 @@ import { FollowerListResult } from "../entities/FollowerEntity";
 import _ from "lodash";
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { resultErrors } from "../constants/ResultErrors";
+import { LikeModel } from "../entities/LikeEntity";
 
 /**
  * 	@class
@@ -37,7 +38,7 @@ export class PortalService extends BaseService implements IWeb3StoreService<Post
 			{
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				switch ( data.by )
@@ -92,6 +93,9 @@ export class PortalService extends BaseService implements IWeb3StoreService<Post
 
 				//	...
 				await this.connect();
+				result.total = await LikeModel
+					.find()
+					.countDocuments();
 				const posts : Array<PostType> = await PostModel
 					.find()
 					.sort( sortBy )
@@ -116,7 +120,6 @@ export class PortalService extends BaseService implements IWeb3StoreService<Post
 
 					//	...
 					result.list = posts;
-					result.total = posts.length;
 				}
 
 				//	...
@@ -143,7 +146,7 @@ export class PortalService extends BaseService implements IWeb3StoreService<Post
 			{
 				if ( ! isAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 
 				//	...
@@ -187,6 +190,13 @@ export class PortalService extends BaseService implements IWeb3StoreService<Post
 
 				//	...
 				await this.connect();
+				result.total = await LikeModel
+					.find()
+					.where( {
+						deleted : Types.ObjectId.createFromTime( 0 ).toHexString(),
+						wallet: { $in: followees }
+					} )
+					.countDocuments();
 				const posts : Array<PostType> = await PostModel
 					.find()
 					.where( {
@@ -215,7 +225,6 @@ export class PortalService extends BaseService implements IWeb3StoreService<Post
 
 					//	...
 					result.list = posts;
-					result.total = posts.length;
 				}
 
 				//	...

@@ -36,18 +36,18 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! data )
 				{
-					return reject( `invalid data` );
+					return reject( `${ this.constructor.name } :: invalid data` );
 				}
 
 				//	'statisticView', 'statisticRepost', 'statisticQuote', 'statisticLike', 'statisticFavorite', 'statisticReply'
 				const statisticKeys : Array<string> | null = SchemaUtil.getPrefixedKeys( postSchema, 'statistic' );
 				if ( ! Array.isArray( statisticKeys ) || 0 === statisticKeys.length )
 				{
-					return reject( `failed to calculate statistic prefixed keys` );
+					return reject( `${ this.constructor.name } :: failed to calculate statistic prefixed keys` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig, statisticKeys ) )
 				{
@@ -82,7 +82,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 					origin = await this.queryOneByRefTypeAndRefHash( data.refType, data.refHash );
 					if ( ! origin || ! origin._id )
 					{
-						return reject( `origin not found` );
+						return reject( `${ this.constructor.name } :: origin not found` );
 					}
 				}
 
@@ -211,19 +211,19 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObject( data ) )
 				{
-					return reject( `invalid data` );
+					return reject( `${ this.constructor.name } :: invalid data` );
 				}
 				if ( ! SchemaUtil.isValidKeccak256Hash( data.hash ) )
 				{
-					return reject( `invalid data.hash` );
+					return reject( `${ this.constructor.name } :: invalid data.hash` );
 				}
 				if ( ! TypeUtil.isNotEmptyString( data.key ) )
 				{
-					return reject( `invalid data.key` );
+					return reject( `${ this.constructor.name } :: invalid data.key` );
 				}
 
 				//
@@ -232,7 +232,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				const statisticKeys : Array<string> | null = SchemaUtil.getPrefixedKeys( commentSchema, 'statistic' );
 				if ( ! Array.isArray( statisticKeys ) || 0 === statisticKeys.length )
 				{
-					return reject( `failed to calculate statistic prefixed keys` );
+					return reject( `${ this.constructor.name } :: failed to calculate statistic prefixed keys` );
 				}
 				if ( statisticKeys.includes( data.key ) )
 				{
@@ -268,12 +268,12 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'hash' ] ) ||
 					! TypeUtil.isNotEmptyString( data.hash ) )
 				{
-					return reject( `invalid data.hash` );
+					return reject( `${ this.constructor.name } :: invalid data.hash` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -283,7 +283,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 					Types.ObjectId.createFromTime( 1 ).toHexString() !== data.deleted )
 				{
 					//	MUST BE 1 for DELETION
-					return reject( `invalid data.deleted` );
+					return reject( `${ this.constructor.name } :: invalid data.deleted` );
 				}
 
 				//	throat checking
@@ -334,7 +334,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			{
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				let post : PostType | null = null;
@@ -384,7 +384,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			{
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				switch ( data.by )
@@ -421,11 +421,11 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			{
 				if ( ! TypeUtil.isNotEmptyString( hash ) )
 				{
-					return reject( `invalid hash` );
+					return reject( `${ this.constructor.name } :: invalid hash` );
 				}
 
 				await this.connect();
-				const record = await PostModel
+				const record : PostType | null = await PostModel
 					.findOne()
 					.byHash( hash )
 					.lean<PostType>()
@@ -434,9 +434,12 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				{
 					if ( isAddress( wallet ) )
 					{
+						//	to check whether the specified wallet has favorited this post
 						record[ this.walletFavoritedKey ] =
 							Web3Digester.isValidHash( record.hash ) &&
 							await this.walletFavoritedPost( wallet, record.hash );
+
+						//	to check whether the specified wallet has liked this post
 						record[ this.walletLikedKey ] =
 							Web3Digester.isValidHash( record.hash ) &&
 							await this.walletLikedPost( wallet, record.hash );
@@ -468,11 +471,11 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotEmptyString( hash ) )
 				{
-					return reject( `invalid hash` );
+					return reject( `${ this.constructor.name } :: invalid hash` );
 				}
 
 				await this.connect();
@@ -515,7 +518,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
@@ -533,7 +536,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				};
 
 				await this.connect();
-				const total : number = await PostModel
+				result.total = await PostModel
 					.find()
 					.byWallet( wallet )
 					.countDocuments();
@@ -559,8 +562,6 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 
 					//	...
 					result.list = posts;
-					//result.total = posts.length;
-					result.total = total;
 				}
 
 				//	...
@@ -587,7 +588,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 			{
 				if ( ! EtherWallet.isValidAddress( refAuthorWallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
@@ -605,7 +606,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				};
 
 				await this.connect();
-				const total : number = await PostModel
+				result.total = await PostModel
 					.find()
 					.byRefAuthorWallet( refAuthorWallet )
 					.countDocuments();
@@ -634,8 +635,6 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 
 					//	...
 					result.list = posts;
-					//result.total = posts.length;
-					result.total = total;
 				}
 
 				//	...

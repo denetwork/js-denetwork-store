@@ -4,7 +4,7 @@ import { PageUtil, TestUtil, TypeUtil } from "denetwork-utils";
 import { PostModel, PostType } from "../entities/PostEntity";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { ERefDataTypes } from "../models/ERefDataTypes";
-import { CommentModel } from "../entities/CommentEntity";
+import { CommentModel, CommentType } from "../entities/CommentEntity";
 import { isAddress } from "ethers";
 import { Web3Digester } from "web3id";
 import { FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
@@ -163,25 +163,25 @@ export abstract class BaseService extends DatabaseConnection
 			{
 				if ( ! Types.ObjectId.isValid( id ) )
 				{
-					return reject( `invalid id` );
+					return reject( `${ this.constructor.name } :: invalid id` );
 				}
 
 				const statisticKeys : Array<string> | null = SchemaUtil.getPrefixedKeys( model.schema, 'statistic' );
 				if ( ! Array.isArray( statisticKeys ) || 0 === statisticKeys.length )
 				{
-					return reject( `failed to calculate statistic prefixed keys` );
+					return reject( `${ this.constructor.name } :: failed to calculate statistic prefixed keys` );
 				}
 				if ( ! statisticKeys.includes( key ) )
 				{
-					return reject( `invalid key` );
+					return reject( `${ this.constructor.name } :: invalid key` );
 				}
 				if ( ! TypeUtil.isNumeric( value ) )
 				{
-					return reject( `invalid value` );
+					return reject( `${ this.constructor.name } :: invalid value` );
 				}
 				if ( 1 !== value && -1 !== value )
 				{
-					return reject( `invalid value, must be 1 or -1` );
+					return reject( `${ this.constructor.name } :: invalid value, must be 1 or -1` );
 				}
 
 				await this.connect();
@@ -247,7 +247,7 @@ export abstract class BaseService extends DatabaseConnection
 			{
 				if ( ! model )
 				{
-					return reject( `invalid model` );
+					return reject( `${ this.constructor.name } :: invalid model` );
 				}
 
 				await this.connect();
@@ -287,11 +287,11 @@ export abstract class BaseService extends DatabaseConnection
 			{
 				if ( ! Object.values( ERefDataTypes ).includes( refType ) )
 				{
-					return reject( `invalid refType` );
+					return reject( `${ this.constructor.name } :: invalid refType` );
 				}
 				if ( ! SchemaUtil.isValidKeccak256Hash( refHash ) )
 				{
-					return reject( `invalid refHash` );
+					return reject( `${ this.constructor.name } :: invalid refHash` );
 				}
 
 				let model !: Model<any>;
@@ -305,7 +305,7 @@ export abstract class BaseService extends DatabaseConnection
 				}
 				if ( ! model )
 				{
-					return reject( `undefined model` );
+					return reject( `${ this.constructor.name } :: undefined model` );
 				}
 
 				await this.connect();
@@ -377,15 +377,15 @@ export abstract class BaseService extends DatabaseConnection
 			{
 				if ( ! isAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! Object.values( ERefDataTypes ).includes( refType ) )
 				{
-					return reject( `invalid refType` );
+					return reject( `${ this.constructor.name } :: invalid refType` );
 				}
 				if ( ! Web3Digester.isValidHash( refHash ) )
 				{
-					return reject( `invalid refHash` );
+					return reject( `${ this.constructor.name } :: invalid refHash` );
 				}
 
 				const favRecord = await FavoriteModel
@@ -436,15 +436,15 @@ export abstract class BaseService extends DatabaseConnection
 			{
 				if ( ! isAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! Object.values( ERefDataTypes ).includes( refType ) )
 				{
-					return reject( `invalid refType` );
+					return reject( `${ this.constructor.name } :: invalid refType` );
 				}
 				if ( ! Web3Digester.isValidHash( refHash ) )
 				{
-					return reject( `invalid refHash` );
+					return reject( `${ this.constructor.name } :: invalid refHash` );
 				}
 
 				const likeRecord = await LikeModel
@@ -462,6 +462,57 @@ export abstract class BaseService extends DatabaseConnection
 	}
 
 	/**
+	 *	@param refType	{ERefDataTypes}	- ref type
+	 *	@param hash	{string}	- a 66-character hexadecimal string
+	 *	@returns {Promise< PostType | null >}
+	 */
+	public queryOneByRefTypeAndHash( refType : ERefDataTypes, hash : string ) : Promise<PostType | CommentType | null>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! Object.values( ERefDataTypes ).includes( refType ) )
+				{
+					return reject( `${ this.constructor.name } :: invalid refType` );
+				}
+				if ( ! TypeUtil.isNotEmptyString( hash ) )
+				{
+					return reject( `${ this.constructor.name } :: invalid hash` );
+				}
+
+				await this.connect();
+				if ( ERefDataTypes.post === refType )
+				{
+					const post : PostType | null = await PostModel
+						.findOne()
+						.byHash( hash )
+						.lean<PostType>()
+						.exec();
+					return resolve( post );
+				}
+				else if ( ERefDataTypes.comment === refType )
+				{
+					const comment : CommentType | null = await CommentModel
+						.findOne()
+						.byHash( hash )
+						.lean<CommentType>()
+						.exec();
+					return resolve( comment );
+				}
+
+				//	...
+				resolve( null );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+
+	/**
 	 * 	@returns {Promise<void>}
 	 */
 	public clearAll<T>( model : Model<T>) : Promise<void>
@@ -472,11 +523,11 @@ export abstract class BaseService extends DatabaseConnection
 			{
 				if ( ! TestUtil.isTestEnv() )
 				{
-					return reject( `only allowed to run in test environment` );
+					return reject( `${ this.constructor.name } :: only allowed to run in test environment` );
 				}
 				if ( ! model )
 				{
-					return reject( `invalid model` );
+					return reject( `${ this.constructor.name } :: invalid model` );
 				}
 
 				await this.connect();

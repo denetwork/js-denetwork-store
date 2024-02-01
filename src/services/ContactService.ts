@@ -34,7 +34,7 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -43,7 +43,7 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'address' ] ) ||
 					! TypeUtil.isNotEmptyString( data.address ) )
 				{
-					return reject( `invalid data.address` );
+					return reject( `${ this.constructor.name } :: invalid data.address` );
 				}
 
 				//	...
@@ -101,7 +101,7 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -110,7 +110,7 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'address' ] ) ||
 					! TypeUtil.isNotEmptyString( data.address ) )
 				{
-					return reject( `invalid data.address` );
+					return reject( `${ this.constructor.name } :: invalid data.address` );
 				}
 
 				//	throat checking
@@ -182,7 +182,7 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -191,13 +191,13 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'address' ] ) ||
 					! TypeUtil.isNotEmptyString( data.address ) )
 				{
-					return reject( `invalid data.address` );
+					return reject( `${ this.constructor.name } :: invalid data.address` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'deleted' ] ) ||
 					Types.ObjectId.createFromTime( 1 ).toHexString() !== data.deleted )
 				{
 					//	MUST BE 1 for DELETION
-					return reject( `invalid data.deleted` );
+					return reject( `${ this.constructor.name } :: invalid data.deleted` );
 				}
 
 				//	throat checking
@@ -243,11 +243,11 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				switch ( data.by )
@@ -281,11 +281,11 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				switch ( data.by )
@@ -319,11 +319,11 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! EtherWallet.isValidAddress( address ) )
 				{
-					return reject( `invalid address` );
+					return reject( `${ this.constructor.name } :: invalid address` );
 				}
 
 				await this.connect();
@@ -359,11 +359,11 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotEmptyString( hash ) )
 				{
-					return reject( `invalid hash` );
+					return reject( `${ this.constructor.name } :: invalid hash` );
 				}
 
 				await this.connect();
@@ -400,7 +400,7 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
@@ -418,7 +418,7 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 				};
 
 				await this.connect();
-				const total : number = await ContactModel
+				result.total = await ContactModel
 					.find()
 					.byWalletAndAddress( wallet, address )
 					.countDocuments();
@@ -433,8 +433,6 @@ export class ContactService extends BaseService implements IWeb3StoreService<Con
 				if ( Array.isArray( contacts ) )
 				{
 					result.list = contacts;
-					//result.total = contacts.length;
-					result.total = total;
 				}
 
 				//	...

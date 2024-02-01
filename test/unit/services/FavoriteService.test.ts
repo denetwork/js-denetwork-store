@@ -15,6 +15,7 @@ import {
 import { EtherWallet, TWalletBaseItem, Web3Digester, Web3Signer } from "web3id";
 import { ethers } from "ethers";
 import { TQueryListOptions } from "../../../src/models/TQuery";
+import { TypeUtil } from "denetwork-utils";
 
 
 /**
@@ -859,18 +860,24 @@ describe( "FavoriteService", () =>
 				//       pageSize: 10,
 				//       list: [
 				//         {
-				//           _id: new ObjectId("64f77f309936976f7397f70b"),
-				//           version: '1.0.0',
-				//           deleted: new ObjectId("000000000000000000000000"),
-				//           wallet: '0xC8F60EaF5988aC37a2963aC5Fabe97f709d6b357',
-				//           sig: '0x1940051530cfec64217770a6ad239ceb9d891e1724e3664b53e17b09117426961a10a7e2a0ae4a7391d13a8b087b03e034ef4cd6d123e8df34ba11b11ed11ee41c',
-				//           name: 'Sam',
-				//           address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
-				//           avatar: 'https://avatars.githubusercontent.com/u/142800322?v=4',
-				//           remark: 'no remark',
-				//           createdAt: 2023-09-05T19:19:12.263Z,
-				//           updatedAt: 2023-09-05T19:19:12.263Z,
-				//           __v: 0
+				// 		_id: new ObjectId("65bbf777b828c4288add5e0c"),
+				// 		timestamp: 1706817399025,
+				// 		hash: '0x9a1bff1fa239fff3b9e9e75dc198b14b76cba07dbabc72c07855f86d227f14d2',
+				// 		version: '1.0.0',
+				// 		deleted: '000000000000000000000000',
+				// 		wallet: '0xc8f60eaf5988ac37a2963ac5fabe97f709d6b357',
+				// 		sig: '0x835031444c527f5215896725f3f07cdc9fa24041c05e21321699dab5c7e602de2d79d653b1fd156b2c864540c1c475d9ee7525d755d6695e41640c1086f0fa201c',
+				// 		refAuthorWallet: '0x463d64f45748eeddf098a96e03705b90d2053ee3',
+				// 		refAuthorName: 'XING',
+				// 		refAuthorAvatar: 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				// 		refType: 'post',
+				// 		refHash: '0x8c8a61fd1a0d3f65e620d200814b24ddc45da37ba2f9a65229f5be284828dfc5',
+				// 		refBody: '{"timestamp":1706817399019,"hash":"0x8c8a61fd1a0d3f65e620d200814b24ddc45da37ba2f9a65229f5be284828dfc5","version":"1.0.0","deleted":"000000000000000000000000","wallet":"0x463d64f45748eeddf098a96e03705b90d2053ee3","bitcoinPrice":26888,"sig":"0x3a5f7a78c7bdddafc68578aa2df1a71af2b973168227404941f48ae8d402f7236e6acc2f5c8580a15f9ab3d1e4f9b8129074eeccff8845076052b4979b4954c11b","contentType":"original","authorName":"XING","authorAvatar":"https://avatars.githubusercontent.com/u/142800322?v=4","body":"Hello 1","pictures":[],"videos":[],"statisticView":0,"statisticRepost":0,"statisticQuote":0,"statisticLike":0,"statisticFavorite":0,"statisticReply":0,"remark":"no ...99","_id":"65bbf777b828c4288add5e0a","createdAt":"2024-02-01T19:56:39.019Z","updatedAt":"2024-02-01T19:56:39.019Z","__v":0}',
+				// 		remark: 'no remark 99',
+				// 		createdAt: 2024-02-01T19:56:39.025Z,
+				// 		updatedAt: 2024-02-01T19:56:39.025Z,
+				// 		__v: 0,
+				// 		refData: [Object]
 				//         }
 				//       ]
 				//     }
@@ -884,6 +891,72 @@ describe( "FavoriteService", () =>
 						for ( const key of requiredKeys )
 						{
 							expect( favorite ).toHaveProperty( key );
+						}
+
+						// console.log( `favorite :`, favorite );
+						// favorite : {
+						// 	_id: new ObjectId("65bbf984b4f56806c33bc89e"),
+						// 		timestamp: 1706817924495,
+						// 		hash: '0xfedaeb6d712c20a48fa6d22f93fe0e9d3644b39b637c42b0c61becd89853d0db',
+						// 		version: '1.0.0',
+						// 		deleted: '000000000000000000000000',
+						// 		wallet: '0xc8f60eaf5988ac37a2963ac5fabe97f709d6b357',
+						// 		sig: '0xca7d38ce5069f6ebc1bfdead6b883d795c4df988cdeb4e6d4f04d1431f7c8fe3461f98551a13e47199e032dac297c35a364b7b9c764e03dcdf1d0b5a3f10ca941c',
+						// 		refAuthorWallet: '0x88401eaee61ca950839d4c45a3733bcab33bb258',
+						// 		refAuthorName: 'XING',
+						// 		refAuthorAvatar: 'https://avatars.githubusercontent.com/u/142800322?v=4',
+						// 		refType: 'post',
+						// 		refHash: '0x814223852a0cd6176267d5892497e5174e14ba891799bdb23f300300cb365714',
+						// 		refBody: '{"timestamp":1706817924489,"hash":"0x814223852a0cd6176267d5892497e5174e14ba891799bdb23f300300cb365714","version":"1.0.0","deleted":"000000000000000000000000","wallet":"0x88401eaee61ca950839d4c45a3733bcab33bb258","bitcoinPrice":26888,"sig":"0xceb7b9fe4e3e5eea25602b174ba0be79de279f0d12eba47d447e173ede696365037a90107dc87e42dac4123e95f03178ab1ef1db10b568a6da28d990c23b6af71b","contentType":"original","authorName":"XING","authorAvatar":"https://avatars.githubusercontent.com/u/142800322?v=4","body":"Hello 1","pictures":[],"videos":[],"statisticView":0,"statisticRepost":0,"statisticQuote":0,"statisticLike":0,"statisticFavorite":0,"statisticReply":0,"remark":"no ...99","_id":"65bbf984b4f56806c33bc89c","createdAt":"2024-02-01T20:05:24.489Z","updatedAt":"2024-02-01T20:05:24.489Z","__v":0}',
+						// 		remark: 'no remark 99',
+						// 		createdAt: 2024-02-01T20:05:24.495Z,
+						// 		updatedAt: 2024-02-01T20:05:24.495Z,
+						// 		__v: 0,
+						// 		refData: {
+						// 		_id: new ObjectId("65bbf984b4f56806c33bc89c"),
+						// 			timestamp: 1706817924489,
+						// 			hash: '0x814223852a0cd6176267d5892497e5174e14ba891799bdb23f300300cb365714',
+						// 			version: '1.0.0',
+						// 			deleted: '000000000000000000000000',
+						// 			wallet: '0x88401eaee61ca950839d4c45a3733bcab33bb258',
+						// 			bitcoinPrice: 26888,
+						// 			sig: '0xceb7b9fe4e3e5eea25602b174ba0be79de279f0d12eba47d447e173ede696365037a90107dc87e42dac4123e95f03178ab1ef1db10b568a6da28d990c23b6af71b',
+						// 			contentType: 'original',
+						// 			authorName: 'XING',
+						// 			authorAvatar: 'https://avatars.githubusercontent.com/u/142800322?v=4',
+						// 			body: 'Hello 1',
+						// 			pictures: [],
+						// 			videos: [],
+						// 			statisticView: 0,
+						// 			statisticRepost: 0,
+						// 			statisticQuote: 0,
+						// 			statisticLike: 0,
+						// 			statisticFavorite: 1,
+						// 			statisticReply: 0,
+						// 			remark: 'no ...99',
+						// 			createdAt: 2024-02-01T20:05:24.489Z,
+						// 			updatedAt: 2024-02-01T20:05:24.504Z,
+						// 			__v: 0
+						// 	}
+						// }
+						expect( favorite ).toHaveProperty( 'refHash' );
+						expect( favorite.refHash ).not.toBeNull();
+						expect( TypeUtil.isString( favorite.refHash ) ).toBeTruthy();
+						expect( favorite.refHash.length ).toBeGreaterThan( 0 );
+
+						expect( favorite ).toHaveProperty( 'refData' );
+						if ( favorite.refData )
+						{
+							expect( favorite.refData ).not.toBeNull();
+							expect( favorite.refData ).toHaveProperty( 'hash' );
+							expect( favorite.refData.hash ).not.toBeNull();
+							expect( TypeUtil.isString( favorite.refData.hash ) ).toBeTruthy();
+							expect( favorite.refData.hash.length ).toBeGreaterThan( 0 );
+							expect( favorite.refData.hash ).toBe( favorite.refHash );
+						}
+						else
+						{
+							//	referred data may be deleted by its author
 						}
 					}
 				}

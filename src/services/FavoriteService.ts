@@ -36,7 +36,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -44,11 +44,11 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 				}
 				if ( ! Object.values( ERefDataTypes ).includes( data.refType ) )
 				{
-					return reject( `invalid data.refType` );
+					return reject( `${ this.constructor.name } :: invalid data.refType` );
 				}
 				if ( ! SchemaUtil.isValidKeccak256Hash( data.refHash ) )
 				{
-					return reject( `invalid data.refHash` );
+					return reject( `${ this.constructor.name } :: invalid data.refHash` );
 				}
 
 				//	...
@@ -76,7 +76,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 				const origin = await this.queryOneByRefTypeAndRefHash( data.refType, data.refHash );
 				if ( ! origin || ! origin._id )
 				{
-					return reject( `origin not found` );
+					return reject( `${ this.constructor.name } :: origin not found` );
 				}
 
 				//	check duplicate
@@ -179,7 +179,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -189,7 +189,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 					Types.ObjectId.createFromTime( 1 ).toHexString() !== data.deleted )
 				{
 					//	MUST BE 1 for DELETION
-					return reject( `invalid data.deleted` );
+					return reject( `${ this.constructor.name } :: invalid data.deleted` );
 				}
 
 				//	throat checking
@@ -220,7 +220,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 				}
 				else
 				{
-					return reject( `not found` );
+					return reject( `${ this.constructor.name } :: not found` );
 				}
 
 				if ( find )
@@ -253,11 +253,11 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				switch ( data.by )
@@ -265,23 +265,23 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 					case 'hexId' :
 						if ( ! TypeUtil.isNotEmptyString( data.hexId ) )
 						{
-							return reject( `invalid data.hexId` );
+							return reject( `${ this.constructor.name } :: invalid data.hexId` );
 						}
 						return resolve( await this._queryOneByHexId( data.hexId ) );
 					case 'hash' :
 						if ( ! SchemaUtil.isValidKeccak256Hash( data.hash ) )
 						{
-							return reject( `invalid data.hash` );
+							return reject( `${ this.constructor.name } :: invalid data.hash` );
 						}
 						return resolve( await this._queryOneByHash( data.hash ) );
 					case 'walletAndRefTypeAndRefHash' :
 						if ( ! Object.values( ERefDataTypes ).includes( data.refType ) )
 						{
-							return reject( `invalid data.refType` );
+							return reject( `${ this.constructor.name } :: invalid data.refType` );
 						}
 						if ( ! SchemaUtil.isValidKeccak256Hash( data.refHash ) )
 						{
-							return reject( `invalid data.refHash` );
+							return reject( `${ this.constructor.name } :: invalid data.refHash` );
 						}
 						return resolve( await this._queryOneByWalletAndRefTypeAndRefHash( wallet, data.refType, data.refHash ) );
 				}
@@ -309,15 +309,15 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 				if ( ! Object.values( ERefDataTypes ).includes( data.refType ) )
 				{
-					return reject( `invalid data.refType` );
+					return reject( `${ this.constructor.name } :: invalid data.refType` );
 				}
 
 				switch ( data.by )
@@ -350,7 +350,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 			{
 				if ( ! TypeUtil.isNotEmptyString( hexId ) )
 				{
-					return reject( `invalid hexId` );
+					return reject( `${ this.constructor.name } :: invalid hexId` );
 				}
 
 				await this.connect();
@@ -386,7 +386,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 			{
 				if ( ! TypeUtil.isNotEmptyString( hash ) )
 				{
-					return reject( `invalid hash` );
+					return reject( `${ this.constructor.name } :: invalid hash` );
 				}
 
 				await this.connect();
@@ -423,15 +423,15 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! Object.values( ERefDataTypes ).includes( refType ) )
 				{
-					return reject( `invalid refType` );
+					return reject( `${ this.constructor.name } :: invalid refType` );
 				}
 				if ( ! SchemaUtil.isValidKeccak256Hash( refHash ) )
 				{
-					return reject( `invalid refHash` );
+					return reject( `${ this.constructor.name } :: invalid refHash` );
 				}
 
 				await this.connect();
@@ -468,7 +468,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
@@ -484,7 +484,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 				};
 
 				await this.connect();
-				const total : number = await FavoriteModel
+				result.total = await FavoriteModel
 					.find()
 					.byWalletAndRefType( wallet, refType )
 					.countDocuments();
@@ -498,9 +498,16 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 					.exec();
 				if ( Array.isArray( list ) )
 				{
+					for ( let i = 0; i < list.length; i ++ )
+					{
+						list[ i ].refData = await this.queryOneByRefTypeAndHash(
+							list[ i ].refType,
+							list[ i ].refHash
+						);
+					}
+
+					//	...
 					result.list = list;
-					//result.total = list.length;
-					result.total = total;
 				}
 
 				//	...

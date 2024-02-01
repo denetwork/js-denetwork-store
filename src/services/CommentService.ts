@@ -11,7 +11,6 @@ import { postSchema } from "../entities/PostEntity";
 import { resultErrors } from "../constants/ResultErrors";
 import _ from "lodash";
 import { isAddress } from "ethers";
-import { FollowerModel } from "../entities/FollowerEntity";
 
 /**
  * 	class CommentService
@@ -37,18 +36,18 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! data )
 				{
-					return reject( `invalid data` );
+					return reject( `${ this.constructor.name } :: invalid data` );
 				}
 
 				//	'statisticView', 'statisticRepost', 'statisticQuote', 'statisticLike', 'statisticFavorite', 'statisticReply'
 				const statisticKeys : Array<string> | null = SchemaUtil.getPrefixedKeys( postSchema, 'statistic' );
 				if ( ! Array.isArray( statisticKeys ) || 0 === statisticKeys.length )
 				{
-					return reject( `failed to calculate statistic prefixed keys` );
+					return reject( `${ this.constructor.name } :: failed to calculate statistic prefixed keys` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig, statisticKeys ) )
 				{
@@ -137,19 +136,19 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObject( data ) )
 				{
-					return reject( `invalid data` );
+					return reject( `${ this.constructor.name } :: invalid data` );
 				}
 				if ( ! SchemaUtil.isValidKeccak256Hash( data.hash ) )
 				{
-					return reject( `invalid data.hash` );
+					return reject( `${ this.constructor.name } :: invalid data.hash` );
 				}
 				if ( ! TypeUtil.isNotEmptyString( data.key ) )
 				{
-					return reject( `invalid data.key` );
+					return reject( `${ this.constructor.name } :: invalid data.key` );
 				}
 
 				//
@@ -158,7 +157,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				const statisticKeys : Array<string> | null = SchemaUtil.getPrefixedKeys( commentSchema, 'statistic' );
 				if ( ! Array.isArray( statisticKeys ) || 0 === statisticKeys.length )
 				{
-					return reject( `failed to calculate statistic prefixed keys` );
+					return reject( `${ this.constructor.name } :: failed to calculate statistic prefixed keys` );
 				}
 				if ( statisticKeys.includes( data.key ) )
 				{
@@ -191,25 +190,25 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! SchemaUtil.isValidKeccak256Hash( hash ) )
 				{
-					return reject( `invalid hash` );
+					return reject( `${ this.constructor.name } :: invalid hash` );
 				}
 				if ( ! TypeUtil.isNotEmptyString( key ) )
 				{
-					return reject( `invalid key` );
+					return reject( `${ this.constructor.name } :: invalid key` );
 				}
 
 				const statisticKeys : Array<string> | null = SchemaUtil.getPrefixedKeys( commentSchema, 'statistic' );
 				if ( ! Array.isArray( statisticKeys ) || 0 === statisticKeys.length )
 				{
-					return reject( `failed to calculate statistic prefixed keys` );
+					return reject( `${ this.constructor.name } :: failed to calculate statistic prefixed keys` );
 				}
 				if ( ! statisticKeys.includes( key ) )
 				{
-					return reject( `invalid key` );
+					return reject( `${ this.constructor.name } :: invalid key` );
 				}
 
 				//	throat checking
@@ -262,12 +261,12 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'hash' ] ) ||
 					! TypeUtil.isNotEmptyString( data.hash ) )
 				{
-					return reject( `invalid data.hash` );
+					return reject( `${ this.constructor.name } :: invalid data.hash` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -277,7 +276,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 					Types.ObjectId.createFromTime( 1 ).toHexString() !== data.deleted )
 				{
 					//	MUST BE 1 for DELETION
-					return reject( `invalid data.deleted` );
+					return reject( `${ this.constructor.name } :: invalid data.deleted` );
 				}
 
 				//	throat checking
@@ -328,7 +327,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				let comment : CommentType | null = null;
@@ -377,7 +376,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				let listResult : CommentListResult | null = null;
@@ -404,7 +403,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				{
 					if ( Array.isArray( listResult.list ) && listResult.list.length > 0 )
 					{
-						for ( let i = 0; i < listResult.list.length; i ++ )
+						for ( let i = 0; i < listResult.list.length; i++ )
 						{
 							const comment : CommentType = listResult.list[ i ];
 							const updatedComment : CommentType | null = await this.updateStatistics<CommentType>( CommentModel, comment._id, `statisticView`, 1 );
@@ -442,11 +441,11 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotEmptyString( hash ) )
 				{
-					return reject( `invalid hash` );
+					return reject( `${ this.constructor.name } :: invalid hash` );
 				}
 
 				await this.connect();
@@ -490,11 +489,11 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! TypeUtil.isNotEmptyString( hash ) )
 				{
-					return reject( `invalid hash` );
+					return reject( `${ this.constructor.name } :: invalid hash` );
 				}
 
 				await this.connect();
-				const record = await CommentModel
+				const record : CommentType | null = await CommentModel
 					.findOne()
 					.byHash( hash )
 					.lean<CommentType>()
@@ -503,9 +502,12 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				{
 					if ( isAddress( wallet ) )
 					{
+						//	to check whether the specified wallet has favorited this comment
 						record[ this.walletFavoritedKey ] =
 							Web3Digester.isValidHash( record.hash ) &&
 							await this.walletFavoritedComment( wallet, record.hash );
+
+						//	to check whether the specified wallet has liked this comment
 						record[ this.walletLikedKey ] =
 							Web3Digester.isValidHash( record.hash ) &&
 							await this.walletLikedComment( wallet, record.hash );
@@ -538,12 +540,12 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( postHash &&
 					! SchemaUtil.isValidKeccak256Hash( postHash ) )
 				{
-					return reject( `invalid postHash` );
+					return reject( `${ this.constructor.name } :: invalid postHash` );
 				}
 
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
@@ -561,7 +563,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				};
 
 				await this.connect();
-				const total : number = await CommentModel
+				result.total = await CommentModel
 					.find( { parentHash : { $exists : false } } )
 					.byWalletAndPostHash( wallet, postHash )
 					.countDocuments();
@@ -587,8 +589,6 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 
 					//	...
 					result.list = comments;
-					//result.total = comments.length;
-					result.total = total;
 				}
 
 				//	...
@@ -615,7 +615,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! SchemaUtil.isValidKeccak256Hash( postHash ) )
 				{
-					return reject( `invalid postHash` );
+					return reject( `${ this.constructor.name } :: invalid postHash` );
 				}
 
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
@@ -633,7 +633,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				};
 
 				await this.connect();
-				const total : number = await CommentModel
+				result.total = await CommentModel
 					.find( { parentHash : { $exists : false } } )
 					.byPostHash( postHash )
 					.countDocuments();
@@ -662,8 +662,6 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 
 					//	...
 					result.list = comments;
-					//result.total = comments.length;
-					result.total = total;
 				}
 
 				//	...
@@ -691,11 +689,11 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 			{
 				if ( ! SchemaUtil.isValidKeccak256Hash( postHash ) )
 				{
-					return reject( `invalid postHash` );
+					return reject( `${ this.constructor.name } :: invalid postHash` );
 				}
 				if ( ! SchemaUtil.isValidKeccak256Hash( parentHash ) )
 				{
-					return reject( `invalid parentHash` );
+					return reject( `${ this.constructor.name } :: invalid parentHash` );
 				}
 
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
@@ -713,7 +711,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				};
 
 				await this.connect();
-				const total : number = await CommentModel
+				result.total = await CommentModel
 					.find()
 					.byPostHashAndParentHash( postHash, parentHash )
 					.countDocuments();
@@ -741,8 +739,6 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 					}
 
 					result.list = comments;
-					//result.total = comments.length;
-					result.total = total;
 				}
 
 				//	...

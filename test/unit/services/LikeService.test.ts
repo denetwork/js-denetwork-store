@@ -12,6 +12,7 @@ import { SchemaUtil } from "../../../src";
 import { LikeService } from "../../../src";
 import { TQueryListOptions } from "../../../src/models/TQuery";
 import { resultErrors } from "../../../src";
+import { TypeUtil } from "denetwork-utils";
 
 
 /**
@@ -440,10 +441,10 @@ describe( "LikeService", () =>
 			expect( typeof likeAgain.sig ).toBe( 'string' );
 			expect( likeAgain.sig.length ).toBeGreaterThanOrEqual( 0 );
 
-			console.log( `savedLike :`, savedLike );
-			console.log( `likeToBeDeleted :`, likeToBeDeleted );
-			console.log( `findFavoriteAgain :`, findFavoriteAgain );
-			console.log( `likeAgain :`, likeAgain );
+			// console.log( `savedLike :`, savedLike );
+			// console.log( `likeToBeDeleted :`, likeToBeDeleted );
+			// console.log( `findFavoriteAgain :`, findFavoriteAgain );
+			// console.log( `likeAgain :`, likeAgain );
 
 			const savedLikeAgain = await likeService.add( walletObj.address, likeAgain, likeAgain.sig );
 			expect( savedLikeAgain ).toBeDefined();
@@ -819,6 +820,26 @@ describe( "LikeService", () =>
 						for ( const key of requiredKeys )
 						{
 							expect( like ).toHaveProperty( key );
+						}
+
+						expect( like ).toHaveProperty( 'refHash' );
+						expect( like.refHash ).not.toBeNull();
+						expect( TypeUtil.isString( like.refHash ) ).toBeTruthy();
+						expect( like.refHash.length ).toBeGreaterThan( 0 );
+
+						expect( like ).toHaveProperty( 'refData' );
+						if ( like.refData )
+						{
+							expect( like.refData ).not.toBeNull();
+							expect( like.refData ).toHaveProperty( 'hash' );
+							expect( like.refData.hash ).not.toBeNull();
+							expect( TypeUtil.isString( like.refData.hash ) ).toBeTruthy();
+							expect( like.refData.hash.length ).toBeGreaterThan( 0 );
+							expect( like.refData.hash ).toBe( like.refHash );
+						}
+						else
+						{
+							//	referred data may be deleted by its author
 						}
 					}
 				}

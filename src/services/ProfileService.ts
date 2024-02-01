@@ -33,7 +33,7 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -96,7 +96,7 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -106,7 +106,7 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 					! TypeUtil.isNotEmptyString( data.key ) )
 				{
 					//	MUST BE 1 for DELETION
-					return reject( `invalid data.key` );
+					return reject( `${ this.constructor.name } :: invalid data.key` );
 				}
 
 				//	throat checking
@@ -176,7 +176,7 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -186,13 +186,13 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 					! TypeUtil.isNotEmptyString( data.key ) )
 				{
 					//	MUST BE 1 for DELETION
-					return reject( `invalid data.key` );
+					return reject( `${ this.constructor.name } :: invalid data.key` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'deleted' ] ) ||
 					Types.ObjectId.createFromTime( 1 ).toHexString() !== data.deleted )
 				{
 					//	MUST BE 1 for DELETION
-					return reject( `invalid data.deleted` );
+					return reject( `${ this.constructor.name } :: invalid data.deleted` );
 				}
 
 				//	throat checking
@@ -240,11 +240,11 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				switch ( data.by )
@@ -276,11 +276,11 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				switch ( data.by )
@@ -312,11 +312,11 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotEmptyString( key ) )
 				{
-					return reject( `invalid key` );
+					return reject( `${ this.constructor.name } :: invalid key` );
 				}
 
 				await this.connect();
@@ -352,7 +352,7 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
@@ -368,7 +368,7 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 				};
 
 				await this.connect();
-				const total : number = await ProfileModel
+				result.total = await ProfileModel
 					.find()
 					.byWallet( wallet )
 					.countDocuments();
@@ -383,8 +383,6 @@ export class ProfileService extends BaseService implements IWeb3StoreService< Pr
 				if ( Array.isArray( contacts ) )
 				{
 					result.list = contacts;
-					//result.total = contacts.length;
-					result.total = total;
 				}
 
 				//	...

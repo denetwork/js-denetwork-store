@@ -36,7 +36,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -44,11 +44,11 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 				}
 				if ( ! Object.values( ERefDataTypes ).includes( data.refType ) )
 				{
-					return reject( `invalid data.refType` );
+					return reject( `${ this.constructor.name } :: invalid data.refType` );
 				}
 				if ( ! SchemaUtil.isValidKeccak256Hash( data.refHash ) )
 				{
-					return reject( `invalid data.refHash` );
+					return reject( `${ this.constructor.name } :: invalid data.refHash` );
 				}
 
 				//	...
@@ -76,7 +76,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 				const origin = await this.queryOneByRefTypeAndRefHash( data.refType, data.refHash );
 				if ( ! origin || ! origin._id )
 				{
-					return reject( `origin not found` );
+					return reject( `${ this.constructor.name } :: origin not found` );
 				}
 
 				//	check duplicate
@@ -169,7 +169,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! await Web3Validator.validateObject( wallet, data, sig ) )
 				{
@@ -179,7 +179,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 					Types.ObjectId.createFromTime( 1 ).toHexString() !== data.deleted )
 				{
 					//	MUST BE 1 for DELETION
-					return reject( `invalid data.deleted` );
+					return reject( `${ this.constructor.name } :: invalid data.deleted` );
 				}
 
 				//	throat checking
@@ -210,7 +210,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 				}
 				else
 				{
-					return reject( `not found` );
+					return reject( `${ this.constructor.name } :: not found` );
 				}
 
 				if ( find )
@@ -244,11 +244,11 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				switch ( data.by )
@@ -256,23 +256,23 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 					case 'hexId' :
 						if ( ! TypeUtil.isNotEmptyString( data.hexId ) )
 						{
-							return reject( `invalid data.hexId` );
+							return reject( `${ this.constructor.name } :: invalid data.hexId` );
 						}
 						return resolve( await this._queryOneByHexId( data.hexId ) );
 					case 'hash' :
 						if ( ! SchemaUtil.isValidKeccak256Hash( data.hash ) )
 						{
-							return reject( `invalid data.hash` );
+							return reject( `${ this.constructor.name } :: invalid data.hash` );
 						}
 						return resolve( await this._queryOneByHash( data.hash ) );
 					case 'walletAndRefTypeAndRefHash' :
 						if ( ! Object.values( ERefDataTypes ).includes( data.refType ) )
 						{
-							return reject( `invalid data.refType` );
+							return reject( `${ this.constructor.name } :: invalid data.refType` );
 						}
 						if ( ! SchemaUtil.isValidKeccak256Hash( data.refHash ) )
 						{
-							return reject( `invalid data.refHash` );
+							return reject( `${ this.constructor.name } :: invalid data.refHash` );
 						}
 						return resolve( await this._queryOneByWalletAndRefTypeAndRefHash( wallet, data.refType, data.refHash ) );
 				}
@@ -300,11 +300,11 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! TypeUtil.isNotNullObjectWithKeys( data, [ 'by' ] ) )
 				{
-					return reject( `invalid data, missing key : by` );
+					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
 				switch ( data.by )
@@ -336,7 +336,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 			{
 				if ( ! TypeUtil.isNotEmptyString( hexId ) )
 				{
-					return reject( `invalid hexId` );
+					return reject( `${ this.constructor.name } :: invalid hexId` );
 				}
 
 				await this.connect();
@@ -372,7 +372,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 			{
 				if ( ! TypeUtil.isNotEmptyString( hash ) )
 				{
-					return reject( `invalid hash` );
+					return reject( `${ this.constructor.name } :: invalid hash` );
 				}
 
 				await this.connect();
@@ -409,15 +409,15 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 				if ( ! Object.values( ERefDataTypes ).includes( refType ) )
 				{
-					return reject( `invalid refType` );
+					return reject( `${ this.constructor.name } :: invalid refType` );
 				}
 				if ( ! SchemaUtil.isValidKeccak256Hash( refHash ) )
 				{
-					return reject( `invalid refHash` );
+					return reject( `${ this.constructor.name } :: invalid refHash` );
 				}
 
 				await this.connect();
@@ -454,7 +454,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 			{
 				if ( ! EtherWallet.isValidAddress( wallet ) )
 				{
-					return reject( `invalid wallet` );
+					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
@@ -470,11 +470,11 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 				};
 
 				await this.connect();
-				const total : number = await LikeModel
+				result.total = await LikeModel
 					.find()
 					.byWalletAndRefType( wallet, refType )
 					.countDocuments();
-				const likes : Array<LikeType> = await LikeModel
+				const list : Array<LikeType> = await LikeModel
 					.find()
 					.byWalletAndRefType( wallet, refType )
 					.sort( sortBy )
@@ -482,11 +482,18 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 					.limit( pageSize )
 					.lean<Array<LikeType>>()
 					.exec();
-				if ( Array.isArray( likes ) )
+				if ( Array.isArray( list ) )
 				{
-					result.list = likes;
-					//result.total = contacts.length;
-					result.total = total;
+					for ( let i = 0; i < list.length; i ++ )
+					{
+						list[ i ].refData = await this.queryOneByRefTypeAndHash(
+							list[ i ].refType,
+							list[ i ].refHash
+						);
+					}
+
+					//	...
+					result.list = list;
 				}
 
 				//	...

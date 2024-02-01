@@ -251,6 +251,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 					return reject( `${ this.constructor.name } :: invalid data, missing key : by` );
 				}
 
+				let result = null;
 				switch ( data.by )
 				{
 					case 'hexId' :
@@ -258,13 +259,15 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 						{
 							return reject( `${ this.constructor.name } :: invalid data.hexId` );
 						}
-						return resolve( await this._queryOneByHexId( data.hexId ) );
+						result = await this._queryOneByHexId( data.hexId );
+						break;
 					case 'hash' :
 						if ( ! SchemaUtil.isValidKeccak256Hash( data.hash ) )
 						{
 							return reject( `${ this.constructor.name } :: invalid data.hash` );
 						}
-						return resolve( await this._queryOneByHash( data.hash ) );
+						result = await this._queryOneByHash( data.hash );
+						break;
 					case 'walletAndRefTypeAndRefHash' :
 						if ( ! Object.values( ERefDataTypes ).includes( data.refType ) )
 						{
@@ -274,10 +277,20 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 						{
 							return reject( `${ this.constructor.name } :: invalid data.refHash` );
 						}
-						return resolve( await this._queryOneByWalletAndRefTypeAndRefHash( wallet, data.refType, data.refHash ) );
+						result = await this._queryOneByWalletAndRefTypeAndRefHash( wallet, data.refType, data.refHash );
+						break;
 				}
 
-				resolve( null );
+				if ( result &&
+					TypeUtil.isNotNullObjectWithKeys( result, [ 'refType', 'refHash' ] ) )
+				{
+					result.refData = await this.queryOneByRefTypeAndHash(
+						result.refType,
+						result.refHash
+					);
+				}
+
+				resolve( result );
 			}
 			catch ( err )
 			{

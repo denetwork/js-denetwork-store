@@ -235,6 +235,27 @@ describe( "FavoriteService", () =>
 						expect( result ).toHaveProperty( key );
 					}
 				}
+
+				//	check .refData
+				expect( result ).toHaveProperty( 'refHash' );
+				expect( result.refHash ).not.toBeNull();
+				expect( TypeUtil.isString( result.refHash ) ).toBeTruthy();
+				expect( result.refHash.length ).toBeGreaterThan( 0 );
+
+				expect( result ).toHaveProperty( 'refData' );
+				if ( result.refData )
+				{
+					expect( result.refData ).not.toBeNull();
+					expect( result.refData ).toHaveProperty( 'hash' );
+					expect( result.refData.hash ).not.toBeNull();
+					expect( TypeUtil.isString( result.refData.hash ) ).toBeTruthy();
+					expect( result.refData.hash.length ).toBeGreaterThan( 0 );
+					expect( result.refData.hash ).toBe( result.refHash );
+				}
+				else
+				{
+					//	referred data may be deleted by its author
+				}
 			}
 
 		}, 60 * 10e3 );

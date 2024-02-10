@@ -10,7 +10,6 @@ import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
 import { CommentModel, commentSchema, CommentType } from "../entities/CommentEntity";
 import { isAddress } from "ethers";
-import { LikeModel } from "../entities/LikeEntity";
 
 /**
  * 	class PostService
@@ -390,10 +389,18 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				switch ( data.by )
 				{
 					case 'wallet' :
-						//	wallet - required
+						//	query the posts belonging to the `wallet`,
+						//	as well as the value of favorite and like attributes
+						//	wallet		- required
 						return resolve( await this._queryListByWallet( wallet, data.options ) );
+					case 'address' :
+						//	query the posts belonging to the `data.address`,
+						//	and the value of favorite and like attributes belonging to the `wallet`,
+						//	wallet		- optional
+						//	data.address	- required
+						return resolve( await this._queryListByAddress( wallet, data.address, data.options ) );
 					case 'refAuthorWallet' :
-						//	wallet - optional
+						//	wallet 		- optional
 						return resolve( await this._queryListByRefAuthorWallet( wallet, data.refAuthorWallet, data.options ) );
 				}
 
@@ -506,6 +513,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 	}
 
 	/**
+	 * 	query the posts belonging to the `wallet`, as well as the value of favorite and like attributes
 	 *	@param wallet		{string}	wallet address
 	 *	@param options	{TQueryListOptions}
 	 *	@returns {Promise<PostListResult>}
@@ -558,6 +566,81 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 						posts[ i ][ this.walletLikedKey ] =
 							Web3Digester.isValidHash( posts[ i ].hash ) &&
 							await this.walletLikedPost( wallet, posts[ i ].hash );
+					}
+
+					//	...
+					result.list = posts;
+				}
+
+				//	...
+				resolve( result );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+	/**
+	 *	query the posts belonging to the `address`,
+	 * 	and the value of favorite and like attributes belonging to the `wallet`,
+	 *	@param [wallet]		{string}	optional, wallet address, current user
+	 *	@param address		{string}	required, wallet address, target user
+	 *	@param options	{TQueryListOptions}
+	 *	@returns {Promise<PostListResult>}
+	 */
+	private _queryListByAddress( wallet : string, address : string, options ? : TQueryListOptions ) : Promise<PostListResult>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! EtherWallet.isValidAddress( address ) )
+				{
+					return reject( `${ this.constructor.name } :: invalid address` );
+				}
+
+				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
+				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
+				const skip = ( pageNo - 1 ) * pageSize;
+				const sortBy : {
+					[ key : string ] : SortOrder
+				} = QueryUtil.getSafeSortBy( options?.sort );
+
+				let result : PostListResult = {
+					total : 0,
+					pageNo : pageNo,
+					pageSize : pageSize,
+					list : [],
+				};
+
+				await this.connect();
+				result.total = await PostModel
+					.find()
+					.byWallet( address )
+					.countDocuments();
+				const posts : Array<PostType> = await PostModel
+					.find()
+					.byWallet( address )
+					.sort( sortBy )
+					.skip( skip )
+					.limit( pageSize )
+					.lean<Array<PostType>>()
+					.exec();
+				if ( Array.isArray( posts ) )
+				{
+					if ( EtherWallet.isValidAddress( wallet ) )
+					{
+						for ( let i = 0; i < posts.length; i++ )
+						{
+							posts[ i ][ this.walletFavoritedKey ] =
+								Web3Digester.isValidHash( posts[ i ].hash ) &&
+								await this.walletFavoritedPost( wallet, posts[ i ].hash );
+							posts[ i ][ this.walletLikedKey ] =
+								Web3Digester.isValidHash( posts[ i ].hash ) &&
+								await this.walletLikedPost( wallet, posts[ i ].hash );
+						}
 					}
 
 					//	...

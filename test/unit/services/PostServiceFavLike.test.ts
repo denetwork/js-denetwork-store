@@ -1,22 +1,16 @@
 import { describe, expect } from '@jest/globals';
 import { EtherWallet, Web3Signer, TWalletBaseItem, Web3Digester } from "web3id";
-import { isAddress } from "ethers";
 import {
 	DatabaseConnection,
 	ERefDataTypes,
 	FavoriteService,
-	FavoriteType, FollowerListResult, FollowerService,
-	FollowerType,
-	LikeService,
+	FavoriteType, LikeService,
 	LikeType
 } from "../../../src";
-import { TestUtil, TypeUtil } from "denetwork-utils";
 import { SchemaUtil } from "../../../src";
 import { PostListResult, postSchema, PostType } from "../../../src";
 import { PostService } from "../../../src";
 import { TQueryListOptions } from "../../../src/models/TQuery";
-import { PortalService } from "../../../src";
-import _ from "lodash";
 
 export interface TestUser
 {

@@ -12,7 +12,6 @@ import { FollowerListResult } from "../entities/FollowerEntity";
 import _ from "lodash";
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
 import { resultErrors } from "../constants/ResultErrors";
-import { LikeModel } from "../entities/LikeEntity";
 
 /**
  * 	@class
@@ -93,7 +92,7 @@ export class PortalService extends BaseService implements IWeb3StoreService<Post
 
 				//	...
 				await this.connect();
-				result.total = await LikeModel
+				result.total = await PostModel
 					.find()
 					.countDocuments();
 				const posts : Array<PostType> = await PostModel
@@ -190,13 +189,17 @@ export class PortalService extends BaseService implements IWeb3StoreService<Post
 
 				//	...
 				await this.connect();
-				result.total = await LikeModel
+				result.total = await PostModel
 					.find()
 					.where( {
 						deleted : Types.ObjectId.createFromTime( 0 ).toHexString(),
 						wallet: { $in: followees }
 					} )
 					.countDocuments();
+				// result.total = await LikeModel.countDocuments({
+				// 	deleted : Types.ObjectId.createFromTime( 0 ).toHexString(),
+				// 	wallet: { $in: followees }
+				// });
 				const posts : Array<PostType> = await PostModel
 					.find()
 					.where( {

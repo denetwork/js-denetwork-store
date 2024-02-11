@@ -46,7 +46,7 @@ export const testWalletObjList = {
 /**
  *	unit test
  */
-describe( "PostService", () =>
+describe( "PostServiceFavLike", () =>
 {
 	beforeAll( async () =>
 	{
@@ -86,10 +86,10 @@ describe( "PostService", () =>
 			const likeService = new LikeService();
 			await likeService.clearAll();
 
-			//	choose a user
 			const limitTotal = 100;
 			for ( let i = 0; i < limitTotal; i ++ )
 			{
+				//	choose a user to create post
 				walletObj = testWalletObjList.alice;
 				const NoStr : string = Number(i).toString().padStart( 2, '0' );
 				let post : PostType = {

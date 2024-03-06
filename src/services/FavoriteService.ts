@@ -1,5 +1,5 @@
 import { PageUtil, TestUtil, TypeUtil } from "denetwork-utils";
-import { EtherWallet, Web3Digester, Web3Validator } from "web3id";
+import { EtherWallet, Web3Validator } from "web3id";
 import { ERefDataTypes } from "../models/ERefDataTypes";
 import { FavoriteListResult, FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";

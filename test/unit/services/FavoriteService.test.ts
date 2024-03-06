@@ -5,7 +5,7 @@ import {
 	FavoriteListResult,
 	favoriteSchema,
 	FavoriteService,
-	FavoriteType,
+	FavoriteType, LikeService, LikeType, PostListResult,
 	postSchema,
 	PostService,
 	PostType,
@@ -770,6 +770,168 @@ describe( "FavoriteService", () =>
 					expect( favorite.refData ).toBeDefined();
 					expect( favorite.refData ).toHaveProperty( favoriteService.walletFavoritedKey );
 					expect( favorite.refData ).toHaveProperty( favoriteService.walletLikedKey );
+					expect( favorite.refData[ favoriteService.walletFavoritedKey ] ).toBeTruthy();
+				}
+			}
+
+		}, 60 * 10e3 );
+
+		it( "should return a list of favorites belonging to `data.address`, and extended attributes of .refData belonging to the `wallet`", async () =>
+		{
+			const AliceMnemonic = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
+			const AliceWalletObj : TWalletBaseItem = EtherWallet.createWalletFromMnemonic( AliceMnemonic );
+
+			const BobMnemonic = 'evidence cement snap basket genre fantasy degree ability sunset pistol palace target';
+			const BobWalletObj : TWalletBaseItem = EtherWallet.createWalletFromMnemonic( BobMnemonic );
+
+			const postService = new PostService();
+			await postService.clearAll();
+
+			const likeService = new LikeService();
+			await likeService.clearAll();
+
+			const favoriteService = new FavoriteService();
+			await favoriteService.clearAll();
+
+			//	create Alice's post
+			let post : PostType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : AliceWalletObj.address,
+				sig : ``,
+				authorName : 'Alice',
+				authorAvatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				body : 'Hello, I am ALice',
+				pictures : [],
+				videos : [],
+				bitcoinPrice : 26888,
+				statisticView : 0,
+				statisticRepost : 0,
+				statisticQuote : 0,
+				statisticLike : 0,
+				statisticFavorite : 0,
+				statisticReply : 0,
+				remark : 'no ...',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			post.sig = await Web3Signer.signObject( AliceWalletObj.privateKey, post, exceptedKeys );
+			post.hash = await Web3Digester.hashObject( post, exceptedKeys );
+			expect( post.sig ).toBeDefined();
+			expect( typeof post.sig ).toBe( 'string' );
+			expect( post.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			const savedAlicePost = await postService.add( AliceWalletObj.address, post, post.sig );
+			expect( savedAlicePost ).toBeDefined();
+			expect( savedAlicePost ).toHaveProperty( '_id' );
+
+			//
+			//	Bob liked this post
+			//
+			let likedByBob : LikeType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : BobWalletObj.address,
+				refType : ERefDataTypes.post,
+				refHash : savedAlicePost.hash,
+				refBody : '',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			likedByBob.sig = await Web3Signer.signObject( BobWalletObj.privateKey, likedByBob );
+			likedByBob.hash = await Web3Digester.hashObject( likedByBob );
+			expect( likedByBob.sig ).toBeDefined();
+			expect( typeof likedByBob.sig ).toBe( 'string' );
+			expect( likedByBob.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//	like the post
+			const savedBobLike = await likeService.add( BobWalletObj.address, likedByBob, likedByBob.sig );
+			expect( savedBobLike ).toBeDefined();
+
+			//
+			//	Alice favorite this post
+			//
+			let favoritedByAlice : FavoriteType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : AliceWalletObj.address,
+				refType : ERefDataTypes.post,
+				refHash : savedAlicePost.hash,
+				refBody : '',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			favoritedByAlice.sig = await Web3Signer.signObject( AliceWalletObj.privateKey, favoritedByAlice );
+			favoritedByAlice.hash = await Web3Digester.hashObject( favoritedByAlice );
+			expect( favoritedByAlice.sig ).toBeDefined();
+			expect( typeof favoritedByAlice.sig ).toBe( 'string' );
+			expect( favoritedByAlice.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//
+			//	Bob favorite this post
+			//
+			let favoritedByBob : FavoriteType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : BobWalletObj.address,
+				refType : ERefDataTypes.post,
+				refHash : savedAlicePost.hash,
+				refBody : '',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			favoritedByBob.sig = await Web3Signer.signObject( BobWalletObj.privateKey, favoritedByBob );
+			favoritedByBob.hash = await Web3Digester.hashObject( favoritedByBob );
+			expect( favoritedByBob.sig ).toBeDefined();
+			expect( typeof favoritedByBob.sig ).toBe( 'string' );
+			expect( favoritedByBob.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//	favorite it
+			const savedBobFavorite = await favoriteService.add( BobWalletObj.address, favoritedByBob, favoritedByBob.sig );
+			expect( savedBobFavorite ).toBeDefined();
+
+
+			//
+			//	Using Bob's identity, query the list of favorites belonging to Alice
+			//
+			const results : FavoriteListResult = await favoriteService.queryList(
+				BobWalletObj.address, {
+					by : 'addressAndRefType', address : AliceWalletObj.address, refType : ERefDataTypes.post
+				} );
+			expect( results ).toHaveProperty( 'total' );
+			expect( results ).toHaveProperty( 'list' );
+
+			const requiredKeys : Array<string> | null = SchemaUtil.getRequiredKeys( favoriteSchema );
+			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
+			if ( requiredKeys )
+			{
+				for ( const favorite of results.list )
+				{
+					//console.log( `favorite item :`, favorite )
+					for ( const key of requiredKeys )
+					{
+						expect( favorite ).toHaveProperty( key );
+					}
+
+					expect( favorite ).toHaveProperty( `refData` );
+					expect( favorite.refData ).toBeDefined();
+					expect( favorite.refData ).toHaveProperty( favoriteService.walletFavoritedKey );
+					expect( favorite.refData ).toHaveProperty( favoriteService.walletLikedKey );
+					expect( favorite.refData[ favoriteService.walletLikedKey ] ).toBeTruthy();
 					expect( favorite.refData[ favoriteService.walletFavoritedKey ] ).toBeTruthy();
 				}
 			}

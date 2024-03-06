@@ -336,7 +336,18 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 
 				switch ( data.by )
 				{
+					case 'addressAndRefType' :
+						//	query the favorites belonging to the `data.address`,
+						//	and the values of some extended attributes belonging to the `wallet`
+						//	of the reference content pointed to by .refData
+						//	wallet		- optional
+						//	data.address	- required
+						return resolve( await this._queryListByAddressAndRefType( wallet, data.address, data.refType, data.options ) );
+
 					case 'walletAndRefType' :
+						//	query favorites belonging to the `wallet`,
+						//	as well as the values of some extended attributes of the reference content pointed to .refData
+						//	wallet		- required
 						return resolve( await this._queryListByWalletAndRefType( wallet, data.refType, data.options ) );
 				}
 
@@ -485,6 +496,33 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 
+				resolve( await this._queryListByAddressAndRefType( wallet, wallet, refType, options ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+	/**
+	 *	@param wallet		{string}	wallet address, extended attributes belonging to the `wallet`
+	 *	@param address		{string}	address, favorites belonging to the `address`,
+	 *	@param refType		{ERefDataTypes}
+	 *	@param options	{TQueryListOptions}
+	 *	@returns {Promise<ContactListResult>}
+	 */
+	private _queryListByAddressAndRefType( wallet : string, address : string, refType ?: ERefDataTypes, options ?: TQueryListOptions ) : Promise<FavoriteListResult>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! EtherWallet.isValidAddress( address ) )
+				{
+					return reject( `${ this.constructor.name } :: invalid address` );
+				}
+
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
 				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
 				const skip = ( pageNo - 1 ) * pageSize;
@@ -500,11 +538,11 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 				await this.connect();
 				result.total = await FavoriteModel
 					.find()
-					.byWalletAndRefType( wallet, refType )
+					.byWalletAndRefType( address, refType )
 					.countDocuments();
 				const list : Array<FavoriteType> = await FavoriteModel
 					.find()
-					.byWalletAndRefType( wallet, refType )
+					.byWalletAndRefType( address, refType )
 					.sort( sortBy )
 					.skip( skip )
 					.limit( pageSize )
@@ -536,6 +574,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 			}
 		} );
 	}
+
 
 	/**
 	 * 	@returns {Promise<void>}

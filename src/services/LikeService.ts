@@ -323,8 +323,19 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 
 				switch ( data.by )
 				{
+					case 'addressAndRefType' :
+						//	query the likes belonging to the `data.address`,
+						//	and the values of some extended attributes belonging to the `wallet`
+						//	of the reference content pointed to by .refData
+						//	wallet		- optional
+						//	data.address	- required
+						return resolve( await this._queryListByAddressAndRefType( wallet, data.address, data.refType, data.options ) );
+
 					case 'walletAndRefType' :
-						return resolve( await this._queryListByWalletAndRefType( wallet, data.address, data.options ) );
+						//	query likes belonging to the `wallet`,
+						//	as well as the values of some extended attributes of the reference content pointed to .refData
+						//	wallet		- required
+						return resolve( await this._queryListByWalletAndRefType( wallet, data.refType, data.options ) );
 				}
 
 				//	...
@@ -454,6 +465,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 		} );
 	}
 
+
 	/**
 	 *	@param wallet		{string}	wallet address
 	 *	@param refType		{ERefDataTypes}
@@ -471,6 +483,33 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
 
+				resolve( await this._queryListByAddressAndRefType( wallet, wallet, refType, options ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+	/**
+	 * 	@param wallet		{string}	wallet address, extended attributes belonging to the `wallet`
+	 * 	@param address		{string}	address, likes belonging to the `address`
+	 *	@param refType		{ERefDataTypes}
+	 *	@param options	{TQueryListOptions}
+	 *	@returns {Promise<ContactListResult>}
+	 */
+	private _queryListByAddressAndRefType( wallet : string, address : string, refType ?: ERefDataTypes, options ?: TQueryListOptions ) : Promise<LikeListResult>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! EtherWallet.isValidAddress( address ) )
+				{
+					return reject( `${ this.constructor.name } :: invalid address` );
+				}
+
 				const pageNo = PageUtil.getSafePageNo( options?.pageNo );
 				const pageSize = PageUtil.getSafePageSize( options?.pageSize );
 				const skip = ( pageNo - 1 ) * pageSize;
@@ -486,11 +525,11 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 				await this.connect();
 				result.total = await LikeModel
 					.find()
-					.byWalletAndRefType( wallet, refType )
+					.byWalletAndRefType( address, refType )
 					.countDocuments();
 				const list : Array<LikeType> = await LikeModel
 					.find()
-					.byWalletAndRefType( wallet, refType )
+					.byWalletAndRefType( address, refType )
 					.sort( sortBy )
 					.skip( skip )
 					.limit( pageSize )

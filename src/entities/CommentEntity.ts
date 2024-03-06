@@ -162,6 +162,13 @@ export const commentSchema = new Schema( {
 }, {
 	timestamps: true,
 	query: {
+		byWallet( wallet: string )
+		{
+			return this.where({
+				deleted : Types.ObjectId.createFromTime( 0 ).toHexString(),
+				wallet : wallet
+			} );
+		},
 		byWalletAndPostHash( wallet: string, postHash ?: string )
 		{
 			if ( SchemaUtil.isValidKeccak256Hash( postHash ) )

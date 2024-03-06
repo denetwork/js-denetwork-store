@@ -382,9 +382,23 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				let listResult : CommentListResult | null = null;
 				switch ( data.by )
 				{
+					case 'wallet' :
+						//	retrieve all my comments belongs to `wallet`
+						listResult = await this._queryListByWalletAndPostHash( wallet, undefined, data.options );
+						break;
 					case 'walletAndPostHash' :
 						//	retrieve all my comments in a post
 						listResult = await this._queryListByWalletAndPostHash( wallet, data.postHash, data.options );
+						break;
+					case 'address' :
+						//	retrieve all my comments belongs to `data.address`
+						//	and the values of some extended attributes belonging to the `wallet`
+						listResult = await this._queryListByAddressAndPostHash( wallet, data.address, undefined, data.options );
+						break;
+					case 'addressAndPostHash' :
+						//	retrieve all my comments belongs to `data.address`
+						//	and the values of some extended attributes belonging to the `wallet`
+						listResult = await this._queryListByAddressAndPostHash( wallet, data.address, data.postHash, data.options );
 						break;
 					case 'postHash' :
 						//	retrieve all comments in a post
@@ -542,6 +556,33 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				{
 					return reject( `${ this.constructor.name } :: invalid wallet` );
 				}
+
+				resolve( await this._queryListByAddressAndPostHash( wallet, wallet, postHash, options ) );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+	/**
+	 * 	@param wallet		{string}	wallet address, extended attributes belonging to the `wallet`
+	 * 	@param address		{string}	address, comments belonging to the `address`,
+	 *	@param postHash		{string}	post hash
+	 *	@param options	{TQueryListOptions}
+	 *	@returns {Promise<CommentListResult>}
+	 */
+	private _queryListByAddressAndPostHash( wallet : string, address : string, postHash ? : string, options ? : TQueryListOptions ) : Promise<CommentListResult>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! EtherWallet.isValidAddress( address ) )
+				{
+					return reject( `${ this.constructor.name } :: invalid address` );
+				}
 				if ( postHash &&
 					! SchemaUtil.isValidKeccak256Hash( postHash ) )
 				{
@@ -565,11 +606,11 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				await this.connect();
 				result.total = await CommentModel
 					.find( { parentHash : { $exists : false } } )
-					.byWalletAndPostHash( wallet, postHash )
+					.byWalletAndPostHash( address, postHash )
 					.countDocuments();
 				const comments : Array<CommentType> = await CommentModel
 					.find( { parentHash : { $exists : false } } )
-					.byWalletAndPostHash( wallet, postHash )
+					.byWalletAndPostHash( address, postHash )
 					.sort( sortBy )
 					.skip( skip )
 					.limit( pageSize )

@@ -8,7 +8,7 @@ import { ERefDataTypes } from "./ERefDataTypes";
 export const MRefEntity : any = {
 	refAuthorWallet : {
 		//	QUOTE
-		//	wallet address of quoted author, CASE SENSITIVE
+		//	wallet address of quoted author
 		//	e.g.: `0xC8F60EaF5988aC37a2963aC5Fabe97f709d6b357`
 		type : String,
 		validate : {

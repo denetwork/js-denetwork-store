@@ -462,11 +462,12 @@ export abstract class BaseService extends DatabaseConnection
 	}
 
 	/**
+	 *	@param wallet	{string}	- current user
 	 *	@param refType	{ERefDataTypes}	- ref type
 	 *	@param hash	{string}	- a 66-character hexadecimal string
 	 *	@returns {Promise< PostType | null >}
 	 */
-	public queryOneByRefTypeAndHash( refType : ERefDataTypes, hash : string ) : Promise<PostType | CommentType | null>
+	public queryOneByRefTypeAndHash( wallet : string, refType : ERefDataTypes, hash : string ) : Promise<PostType | CommentType | null>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -482,27 +483,40 @@ export abstract class BaseService extends DatabaseConnection
 				}
 
 				await this.connect();
+
+				let result : { [ key: string ]: any } | null = null;
 				if ( ERefDataTypes.post === refType )
 				{
-					const post : PostType | null = await PostModel
+					result = await PostModel
 						.findOne()
 						.byHash( hash )
 						.lean<PostType>()
 						.exec();
-					return resolve( post );
 				}
 				else if ( ERefDataTypes.comment === refType )
 				{
-					const comment : CommentType | null = await CommentModel
+					result = await CommentModel
 						.findOne()
 						.byHash( hash )
 						.lean<CommentType>()
 						.exec();
-					return resolve( comment );
+				}
+
+				if ( null !== result &&
+					_.isObject( result ) &&
+					! _.isEmpty( result ) &&
+					isAddress( wallet ) )
+				{
+					result[ this.walletFavoritedKey ] =
+						Web3Digester.isValidHash( result.hash ) &&
+						await this.walletFavorited( wallet, refType, result.hash );
+					result[ this.walletLikedKey ] =
+						Web3Digester.isValidHash( result.hash ) &&
+						await this.walletLiked( wallet, refType, result.hash );
 				}
 
 				//	...
-				resolve( null );
+				resolve( result );
 			}
 			catch ( err )
 			{

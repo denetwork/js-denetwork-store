@@ -1,5 +1,5 @@
 import { PageUtil, TestUtil, TypeUtil } from "denetwork-utils";
-import { EtherWallet, Web3Validator } from "web3id";
+import { EtherWallet, Web3Digester, Web3Validator } from "web3id";
 import { ERefDataTypes } from "../models/ERefDataTypes";
 import { FavoriteListResult, FavoriteModel, FavoriteType } from "../entities/FavoriteEntity";
 import { IWeb3StoreService } from "../interfaces/IWeb3StoreService";
@@ -240,7 +240,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 	}
 
 	/**
-	 *	@param wallet	{string}
+	 *	@param wallet	{string}	current user
 	 *	@param data	{any}
 	 *	@param sig	{string}
 	 * 	@returns {Promise< FavoriteType | null >}
@@ -294,6 +294,7 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 					TypeUtil.isNotNullObjectWithKeys( result, [ 'refType', 'refHash' ] ) )
 				{
 					result.refData = await this.queryOneByRefTypeAndHash(
+						wallet,
 						result.refType,
 						result.refHash
 					);
@@ -513,9 +514,12 @@ export class FavoriteService extends BaseService implements IWeb3StoreService< F
 				{
 					for ( let i = 0; i < list.length; i ++ )
 					{
+						const itemRefType = list[ i ].refType;
+						const itemRefHash = list[ i ].refHash;
 						list[ i ].refData = await this.queryOneByRefTypeAndHash(
-							list[ i ].refType,
-							list[ i ].refHash
+							wallet,
+							itemRefType,
+							itemRefHash
 						);
 					}
 

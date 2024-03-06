@@ -760,10 +760,17 @@ describe( "FavoriteService", () =>
 			{
 				for ( const favorite of results.list )
 				{
+					//console.log( `favorite item :`, favorite )
 					for ( const key of requiredKeys )
 					{
 						expect( favorite ).toHaveProperty( key );
 					}
+
+					expect( favorite ).toHaveProperty( `refData` );
+					expect( favorite.refData ).toBeDefined();
+					expect( favorite.refData ).toHaveProperty( favoriteService.walletFavoritedKey );
+					expect( favorite.refData ).toHaveProperty( favoriteService.walletLikedKey );
+					expect( favorite.refData[ favoriteService.walletFavoritedKey ] ).toBeTruthy();
 				}
 			}
 
@@ -838,7 +845,7 @@ describe( "FavoriteService", () =>
 					refType : ERefDataTypes.post,
 					refHash : newPagePost.hash,
 					refBody : JSON.stringify( newPagePost ),
-					refAuthorWallet : postAuthorWallet,
+					refAuthorWallet : postAuthorWallet,	//	wallet address of quoted author
 					refAuthorName : postAuthorName,
 					refAuthorAvatar : postAuthorAvatar,
 					sig : ``,
@@ -970,6 +977,8 @@ describe( "FavoriteService", () =>
 						{
 							expect( favorite.refData ).not.toBeNull();
 							expect( favorite.refData ).toHaveProperty( 'hash' );
+							expect( favorite.refData ).toHaveProperty( favoriteService.walletFavoritedKey );
+							expect( favorite.refData ).toHaveProperty( favoriteService.walletLikedKey );
 							expect( favorite.refData.hash ).not.toBeNull();
 							expect( TypeUtil.isString( favorite.refData.hash ) ).toBeTruthy();
 							expect( favorite.refData.hash.length ).toBeGreaterThan( 0 );

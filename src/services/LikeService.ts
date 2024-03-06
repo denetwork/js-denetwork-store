@@ -285,6 +285,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 					TypeUtil.isNotNullObjectWithKeys( result, [ 'refType', 'refHash' ] ) )
 				{
 					result.refData = await this.queryOneByRefTypeAndHash(
+						wallet,
 						result.refType,
 						result.refHash
 					);
@@ -500,6 +501,7 @@ export class LikeService extends BaseService implements IWeb3StoreService< LikeT
 					for ( let i = 0; i < list.length; i ++ )
 					{
 						list[ i ].refData = await this.queryOneByRefTypeAndHash(
+							wallet,
 							list[ i ].refType,
 							list[ i ].refHash
 						);

@@ -658,8 +658,9 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 	}
 
 	/**
+	 *
 	 *	@param [wallet]			{string}	-
-	 *	@param refAuthorWallet		{string}	- wallet address
+	 *	@param refAuthorWallet		{string}	- wallet address of quoted author
 	 *	@param options	{TQueryListOptions}
 	 *	@returns {Promise<PostListResult>}
 	 */

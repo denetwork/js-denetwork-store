@@ -700,6 +700,13 @@ describe( "LikeService", () =>
 					{
 						expect( like ).toHaveProperty( key );
 					}
+
+					//console.log( `like item: `, like )
+					expect( like ).toHaveProperty( `refData` );
+					expect( like.refData ).toBeDefined();
+					expect( like.refData ).toHaveProperty( likeService.walletFavoritedKey );
+					expect( like.refData ).toHaveProperty( likeService.walletLikedKey );
+					expect( like.refData[ likeService.walletLikedKey ] ).toBeTruthy();
 				}
 			}
 
@@ -853,6 +860,8 @@ describe( "LikeService", () =>
 						{
 							expect( like.refData ).not.toBeNull();
 							expect( like.refData ).toHaveProperty( 'hash' );
+							expect( like.refData ).toHaveProperty( likeService.walletFavoritedKey );
+							expect( like.refData ).toHaveProperty( likeService.walletLikedKey );
 							expect( like.refData.hash ).not.toBeNull();
 							expect( TypeUtil.isString( like.refData.hash ) ).toBeTruthy();
 							expect( like.refData.hash.length ).toBeGreaterThan( 0 );

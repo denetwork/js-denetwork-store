@@ -551,6 +551,141 @@ describe( "PostService", () =>
 			}
 
 		}, 60 * 10e3 );
+
+		it( "should return a list of posts belonging to `data.address`, and extended attributes of the `wallet`", async () =>
+		{
+			const AliceMnemonic = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
+			const AliceWalletObj : TWalletBaseItem = EtherWallet.createWalletFromMnemonic( AliceMnemonic );
+
+			const BobMnemonic = 'evidence cement snap basket genre fantasy degree ability sunset pistol palace target';
+			const BobWalletObj : TWalletBaseItem = EtherWallet.createWalletFromMnemonic( BobMnemonic );
+
+			const postService = new PostService();
+			await postService.clearAll();
+
+			const likeService = new LikeService();
+			await likeService.clearAll();
+
+			const favoriteService = new FavoriteService();
+			await favoriteService.clearAll();
+
+
+			//	create Alice's post
+			let post : PostType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : AliceWalletObj.address,
+				sig : ``,
+				authorName : 'Alice',
+				authorAvatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				body : 'Hello, I am ALice',
+				pictures : [],
+				videos : [],
+				bitcoinPrice : 26888,
+				statisticView : 0,
+				statisticRepost : 0,
+				statisticQuote : 0,
+				statisticLike : 0,
+				statisticFavorite : 0,
+				statisticReply : 0,
+				remark : 'no ...',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			post.sig = await Web3Signer.signObject( AliceWalletObj.privateKey, post, exceptedKeys );
+			post.hash = await Web3Digester.hashObject( post, exceptedKeys );
+			expect( post.sig ).toBeDefined();
+			expect( typeof post.sig ).toBe( 'string' );
+			expect( post.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			const savedAlicePost = await postService.add( AliceWalletObj.address, post, post.sig );
+			expect( savedAlicePost ).toBeDefined();
+			expect( savedAlicePost ).toHaveProperty( '_id' );
+
+			//
+			//	Bob liked this post
+			//
+			let like : LikeType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : BobWalletObj.address,
+				refType : ERefDataTypes.post,
+				refHash : savedAlicePost.hash,
+				refBody : '',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			like.sig = await Web3Signer.signObject( BobWalletObj.privateKey, like );
+			like.hash = await Web3Digester.hashObject( like );
+			expect( like.sig ).toBeDefined();
+			expect( typeof like.sig ).toBe( 'string' );
+			expect( like.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//	like the post
+			const savedBobLike = await likeService.add( BobWalletObj.address, like, like.sig );
+			expect( savedBobLike ).toBeDefined();
+
+
+			//
+			//	Bob favorite this post
+			//
+			let favorite : FavoriteType = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : BobWalletObj.address,
+				refType : ERefDataTypes.post,
+				refHash : savedAlicePost.hash,
+				refBody : '',
+				sig : ``,
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			favorite.sig = await Web3Signer.signObject( BobWalletObj.privateKey, favorite );
+			favorite.hash = await Web3Digester.hashObject( favorite );
+			expect( favorite.sig ).toBeDefined();
+			expect( typeof favorite.sig ).toBe( 'string' );
+			expect( favorite.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			//	favorite it
+			const savedBobFavorite = await favoriteService.add( BobWalletObj.address, favorite, favorite.sig );
+			expect( savedBobFavorite ).toBeDefined();
+
+
+			//
+			//	Using Bob's identity, query the list of posts belonging to Alice
+			//
+			const results : PostListResult = await postService.queryList( BobWalletObj.address, { by : 'address', address : AliceWalletObj.address } );
+			expect( results ).toHaveProperty( 'total' );
+			expect( results ).toHaveProperty( 'list' );
+			const requiredKeys : Array<string> | null = SchemaUtil.getRequiredKeys( postSchema );
+			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
+			if ( requiredKeys )
+			{
+				for ( const record of results.list )
+				{
+					for ( const key of requiredKeys )
+					{
+						expect( record ).toHaveProperty( key );
+					}
+
+					expect( record ).toHaveProperty( postService.walletLikedKey );
+					expect( record[ postService.walletLikedKey ] ).toBeTruthy();
+
+					expect( record ).toHaveProperty( postService.walletFavoritedKey );
+					expect( record[ postService.walletFavoritedKey ] ).toBeTruthy();
+				}
+			}
+
+		}, 60 * 10e3 );
 	} );
 
 

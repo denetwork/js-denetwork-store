@@ -295,11 +295,11 @@ export abstract class BaseService extends DatabaseConnection
 				}
 
 				let model !: Model<any>;
-				if ( 'post' === refType )
+				if ( ERefDataTypes.post === refType )
 				{
 					model = PostModel;
 				}
-				else if ( 'comment' === refType )
+				else if ( ERefDataTypes.comment === refType )
 				{
 					model = CommentModel;
 				}

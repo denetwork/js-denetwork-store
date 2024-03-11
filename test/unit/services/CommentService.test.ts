@@ -184,6 +184,16 @@ describe( "CommentService", () =>
 			expect( savedComment ).not.toHaveProperty( commentService.walletFavoritedKey );
 			expect( savedComment[ commentService.walletFavoritedKey ] ).toBe( undefined );
 
+
+			//
+			//	query the post
+			//
+			const postResult1 : PostType | null = await postService.queryOne( walletObj.address, { by : 'hash', hash : savedPost.hash } );
+			//console.log( postResult1 );
+			expect( postResult1 ).toBeDefined();
+			expect( postResult1 ).toHaveProperty( `statisticComment` );
+			expect( postResult1[ `statisticComment` ] ).toBeGreaterThanOrEqual( 1 );
+
 			//	wait for a while
 			//await TestUtil.sleep(5 * 1000 );
 

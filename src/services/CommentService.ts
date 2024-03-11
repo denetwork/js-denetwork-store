@@ -7,10 +7,11 @@ import { TQueryListOptions } from "../models/TQuery";
 import { CommentListResult, CommentModel, commentSchema, CommentType } from "../entities/CommentEntity";
 import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
-import { postSchema } from "../entities/PostEntity";
+import { PostModel, postSchema, PostType } from "../entities/PostEntity";
 import { resultErrors } from "../constants/ResultErrors";
 import _ from "lodash";
 import { isAddress } from "ethers";
+import { ERefDataTypes } from "../models/ERefDataTypes";
 
 /**
  * 	class CommentService
@@ -80,6 +81,18 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				const savedDoc : Document<CommentType> = await commentModel.save();
 
 				//
+				//	update .statisticComment for the post
+				//
+				if ( Web3Digester.isValidHash( data.postHash ) )
+				{
+					const originPost = await this.queryOneByRefTypeAndRefHash( ERefDataTypes.post, data.postHash );
+					if ( originPost && originPost._id )
+					{
+						await this.updateStatistics<PostType>( PostModel, originPost._id, `statisticComment`, 1 );
+					}
+				}
+
+				//
 				//	update .childrenCount of parent comment
 				//
 				if ( Web3Digester.isValidHash( data.parentHash ) )
@@ -88,6 +101,7 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 					if ( parentComment )
 					{
 						await this._updateCommentStatistics( parentComment.wallet, parentComment.hash, 'statisticChildrenCount', 1 );
+						await this._updateCommentStatistics( parentComment.wallet, parentComment.hash, 'statisticComment', 1 );
 					}
 				}
 
@@ -300,6 +314,32 @@ export class CommentService extends BaseService implements IWeb3StoreService<Com
 				{
 					const update = { deleted : find._id.toHexString() };
 					const newDoc = await CommentModel.findOneAndUpdate( find, update, { new : true } );
+
+					//
+					//	update .statisticComment for the post
+					//
+					if ( Web3Digester.isValidHash( data.postHash ) )
+					{
+						const originPost = await this.queryOneByRefTypeAndRefHash( ERefDataTypes.post, data.postHash );
+						if ( originPost && originPost._id )
+						{
+							await this.updateStatistics<PostType>( PostModel, originPost._id, `statisticComment`, -1 );
+						}
+					}
+
+					//
+					//	update .childrenCount of parent comment
+					//
+					if ( Web3Digester.isValidHash( data.parentHash ) )
+					{
+						const parentComment : CommentType = await this._queryOneByHash( ``, data.parentHash );
+						if ( parentComment )
+						{
+							await this._updateCommentStatistics( parentComment.wallet, parentComment.hash, 'statisticChildrenCount', -1 );
+							await this._updateCommentStatistics( parentComment.wallet, parentComment.hash, 'statisticComment', -1 );
+						}
+					}
+
 					return resolve( newDoc ? 1 : 0 );
 				}
 

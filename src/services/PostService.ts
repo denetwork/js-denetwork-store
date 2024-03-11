@@ -8,7 +8,7 @@ import { PostContentTypes, PostListResult, PostModel, postSchema, PostType } fro
 import { QueryUtil } from "../utils/QueryUtil";
 import { SchemaUtil } from "../utils/SchemaUtil";
 import { resultErrors } from "../constants/ResultErrors";
-import { CommentModel, commentSchema, CommentType } from "../entities/CommentEntity";
+import { CommentModel, CommentType } from "../entities/CommentEntity";
 import { isAddress } from "ethers";
 
 /**
@@ -228,7 +228,7 @@ export class PostService extends BaseService implements IWeb3StoreService<PostTy
 				//
 				//	update statistics
 				//
-				const statisticKeys : Array<string> | null = SchemaUtil.getPrefixedKeys( commentSchema, 'statistic' );
+				const statisticKeys : Array<string> | null = SchemaUtil.getPrefixedKeys( postSchema, 'statistic' );
 				if ( ! Array.isArray( statisticKeys ) || 0 === statisticKeys.length )
 				{
 					return reject( `${ this.constructor.name } :: failed to calculate statistic prefixed keys` );

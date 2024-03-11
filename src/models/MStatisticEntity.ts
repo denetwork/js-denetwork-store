@@ -53,6 +53,14 @@ export const MStatisticEntity : any = {
 		},
 		required: false
 	},
+	statisticComment : {
+		type : Number,
+		validate: {
+			validator : ( v: any ) => TypeUtil.isNumeric( v ) && v >= 0,
+			message: ( props: any ) : string => `invalid ${props.path}, should be greater than or equal to 0`
+		},
+		required: false
+	},
 	statisticShare : {
 		type : Number,
 		validate: {
